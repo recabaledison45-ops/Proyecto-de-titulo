@@ -1,0 +1,6 @@
+{
+  "plugins": ["react", "react-hooks", "import"],
+  "categories": { "correctness": "error" },
+  "env": { "browser": true, "es2022": true },
+  "ignorePatterns": ["dist", "node_modules"]
+}

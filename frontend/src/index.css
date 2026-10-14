@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Paleta: bosque nativo del Maule, arena de playa y arcilla. */
+:root {
+  --radius: 0.75rem;
+  --background: #f6f1e7;
+  --foreground: #1f2a24;
+  --card: #fbf8f1;
+  --card-foreground: #1f2a24;
+  --popover: #fbf8f1;
+  --popover-foreground: #1f2a24;
+  --primary: #2f5d46;
+  --primary-foreground: #f6f1e7;
+  --secondary: #dfe7d6;
+  --secondary-foreground: #24402f;
+  --muted: #ebe4d3;
+  --muted-foreground: #5d6a5f;
+  --accent: #b8573a;
+  --accent-foreground: #fff7f0;
+  --destructive: #b3392f;
+  --border: #d9cfba;
+  --input: #cfc4ab;
+  --ring: #2f5d46;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces Variable", Georgia, "Times New Roman", serif;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { scroll-padding-top: 4.5rem; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  h1, h2, h3, h4 { font-family: var(--font-serif); letter-spacing: -0.01em; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-ring; }
+}
+
+/* Pines de precio en el mapa */
+.price-pin { background: transparent; border: 0; }
+.price-pin span {
+  position: absolute; transform: translate(-50%, -100%);
+  background: var(--card); color: var(--foreground); border: 1.5px solid var(--primary);
+  border-radius: 999px; padding: 2px 9px; font: 600 12px/1.5 var(--font-sans); white-space: nowrap;
+  box-shadow: 0 1px 4px rgb(31 42 36 / 0.25); transition: transform .12s, background .12s;
+}
+.price-pin.active span, .price-pin span:hover {
+  background: var(--primary); color: var(--primary-foreground); transform: translate(-50%, -100%) scale(1.1); z-index: 999;
+}
+.pick-pin { background: transparent; border: 0; }
+.pick-pin span {
+  position: absolute; width: 22px; height: 22px; transform: translate(-50%, -50%); border-radius: 50%;
+  background: var(--accent); border: 3px solid #fff; box-shadow: 0 1px 6px rgb(0 0 0 / 0.4);
+}
+.leaflet-container { font-family: var(--font-sans); background: var(--muted); }
+.leaflet-popup-content-wrapper { border-radius: var(--radius); background: var(--card); }
+
+/* Calendario de reservas */
+.rdp-root { --rdp-accent-color: var(--primary); --rdp-accent-background-color: var(--secondary); --rdp-day-height: 40px; --rdp-day-width: 40px; }
+.rdp-disabled { text-decoration: line-through; }
