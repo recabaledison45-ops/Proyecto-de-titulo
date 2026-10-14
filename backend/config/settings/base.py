@@ -5,7 +5,13 @@ from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
+import dj_database_url
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Carga backend/.env si existe. Las variables reales del sistema tienen prioridad (override=False).
+load_dotenv(BASE_DIR / ".env")
 
 
 def env(name, default=None):
@@ -20,7 +26,7 @@ def env_list(name, default=""):
     return [x.strip() for x in os.environ.get(name, default).split(",") if x.strip()]
 
 
-SECRET_KEY = env("SECRET_KEY", "dev-insecure-key-change-me-0123456789abcdef")
+SECRET_KEY = env("SECRET_KEY") or "dev-insecure-key-change-me-0123456789abcdef"
 DEBUG = False
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 
@@ -33,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "drf_spectacular",
     "corsheaders",
     "shared",
     "apps.users",
@@ -44,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # sirve /static/ sin Nginx (justo tras Security)
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -72,8 +80,23 @@ TEMPLATES = [
     }
 ]
 
-# --- Base de datos: SQLite por defecto, PostgreSQL con DB_ENGINE=postgres ---
-if env("DB_ENGINE", "sqlite") == "postgres":
+# --- Base de datos ---
+# Prioridad: 1) DATABASE_URL (sqlite:///... o postgres://...), 2) DB_ENGINE=postgres + DB_*, 3) SQLite local.
+_DATABASE_URL = env("DATABASE_URL")
+if _DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            _DATABASE_URL,
+            conn_max_age=int(env("DB_CONN_MAX_AGE", "60")),
+            conn_health_checks=True,
+        )
+    }
+    if DATABASES["default"]["ENGINE"].endswith("sqlite3") and not os.path.isabs(str(DATABASES["default"]["NAME"])):
+        DATABASES["default"]["NAME"] = str(BASE_DIR / DATABASES["default"]["NAME"])  # ruta relativa -> backend/
+    if DATABASES["default"]["ENGINE"].endswith("sqlite3"):
+        DATABASES["default"].pop("CONN_MAX_AGE", None)
+        DATABASES["default"].pop("CONN_HEALTH_CHECKS", None)
+elif env("DB_ENGINE", "sqlite") == "postgres":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -82,6 +105,7 @@ if env("DB_ENGINE", "sqlite") == "postgres":
             "PASSWORD": env("DB_PASSWORD", ""),
             "HOST": env("DB_HOST", "localhost"),
             "PORT": env("DB_PORT", "5432"),
+            "CONN_MAX_AGE": int(env("DB_CONN_MAX_AGE", "60")),
         }
     }
 else:
@@ -109,6 +133,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(env("MEDIA_ROOT", str(BASE_DIR / "media")))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
@@ -122,6 +150,7 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.JSONParser",
         "rest_framework.parsers.MultiPartParser",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "shared.pagination.StandardPagination",
     "EXCEPTION_HANDLER": "shared.exceptions.api_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [
@@ -144,6 +173,22 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+# --- Documentación OpenAPI (Swagger UI en /api/docs/, esquema en /api/schema/) ---
+SPECTACULAR_SETTINGS = {
+    "TITLE": "W Experiencias API",
+    "DESCRIPTION": "API REST del marketplace de experiencias turísticas. Autenticación JWT: "
+                   "obtenga el token en /api/v1/auth/login/ y use el botón Authorize (Bearer).",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_AUTHENTICATION": [],
+    "COMPONENT_SPLIT_REQUEST": True,
+    # Mismo conjunto de opciones (guest/host) en usuarios y reseñas: se nombra una sola vez.
+    "ENUM_NAME_OVERRIDES": {"UserRoleEnum": "apps.users.models.User.Role"},
+}
+ENABLE_API_DOCS = env_bool("ENABLE_API_DOCS", False)  # en DEBUG siempre visible (ver urls.py)
+SERVE_MEDIA = env_bool("SERVE_MEDIA", False)
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")

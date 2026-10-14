@@ -1,0 +1,43 @@
+# =============================================================================
+# Orquesta el backend (gunicorn) + PostgreSQL con volúmenes persistentes.
+# Uso:  cp .env.example .env   (editar SECRET_KEY, ALLOWED_HOSTS, CORS..., POSTGRES_*)
+#       docker compose up -d --build
+# =============================================================================
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wexperiencias}
+      POSTGRES_USER: ${POSTGRES_USER:-wexp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Lo definido aquí tiene prioridad sobre .env
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DATABASE_URL: postgres://${POSTGRES_USER:-wexp}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-wexperiencias}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      - media_data:/app/media
+
+volumes:
+  postgres_data:
+  media_data:

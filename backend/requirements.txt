@@ -1,8 +1,26 @@
-Django>=5.2,<5.3
-djangorestframework>=3.15,<3.17
-djangorestframework-simplejwt>=5.3,<6
-django-cors-headers>=4.4,<5
-Pillow>=10.4
-psycopg[binary]>=3.2
-gunicorn>=22
-coverage>=7.5
+# Dependencias de ejecución (versiones fijas, probadas con Python 3.12/3.13).
+# Para desarrollo/pruebas instale además requirements-dev.txt.
+
+# --- Núcleo ---
+Django==5.2.18
+asgiref==3.12.1
+sqlparse==0.6.0
+djangorestframework==3.16.1
+djangorestframework-simplejwt==5.5.1
+PyJWT==2.15.1
+django-cors-headers==4.9.0
+
+# --- Configuración y entorno ---
+python-dotenv==1.2.4
+dj-database-url==3.1.2
+
+# --- Documentación de la API (OpenAPI / Swagger) ---
+drf-spectacular==0.30.0
+
+# --- Base de datos y archivos ---
+psycopg[binary]==3.3.6
+pillow==12.3.0
+
+# --- Servidor de producción ---
+gunicorn==26.2.0
+whitenoise==6.12.0

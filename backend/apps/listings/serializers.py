@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.users.serializers import HostProfileSerializer, PublicUserSerializer
@@ -32,6 +34,7 @@ class SearchParamsSerializer(serializers.Serializer):
 
 
 class _ImageUrlMixin:
+    @extend_schema_field(OpenApiTypes.STR)
     def get_image_url(self, obj):
         if obj.image:
             request = self.context.get("request")
@@ -51,10 +54,12 @@ class ListingListSerializer(_ImageUrlMixin, serializers.ModelSerializer):
                   "booking_mode", "difficulty", "duration_hours", "image_url", "rating_avg", "reviews_count",
                   "is_active", "host"]
 
+    @extend_schema_field(OpenApiTypes.FLOAT)
     def get_rating_avg(self, obj):
         value = getattr(obj, "rating_avg", None)
         return round(float(value), 1) if value is not None else None
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_reviews_count(self, obj):
         return getattr(obj, "reviews_count", 0) or 0
 

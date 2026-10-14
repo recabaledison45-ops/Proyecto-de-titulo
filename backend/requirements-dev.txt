@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Cobertura de pruebas
+coverage==7.16.2

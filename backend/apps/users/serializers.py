@@ -1,4 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from . import selectors
@@ -45,6 +47,7 @@ class PublicUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "display_name"]
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_display_name(self, obj):
         return obj.public_name
 

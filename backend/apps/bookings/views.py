@@ -3,6 +3,8 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework.views import APIView
 
 from shared.permissions import IsHostOrStaff
@@ -20,6 +22,13 @@ def _booking_or_404(pk):
     return get_object_or_404(selectors.base_queryset(), pk=pk)
 
 
+@extend_schema_view(
+    get=extend_schema(summary="Mis reservas / reservas recibidas", parameters=[
+        OpenApiParameter("as", str, description="guest (por defecto) o host", enum=["guest", "host"]),
+        OpenApiParameter("status", str, description="Filtra por estado de la reserva"),
+    ]),
+    post=extend_schema(summary="Crear reserva", request=BookingCreateSerializer, responses={201: BookingSerializer}),
+)
 class BookingListCreateView(ListAPIView):
     serializer_class = BookingSerializer
 
@@ -54,6 +63,7 @@ class _BookingAction(APIView):
         return Response(BookingSerializer(selectors.get_booking(booking.pk), context=_ctx(request)).data)
 
 
+@extend_schema(summary="Cancelar reserva", request=ReasonSerializer, responses=BookingSerializer)
 class CancelView(_BookingAction):
     def post(self, request, pk):
         booking = _booking_or_404(pk)
@@ -63,6 +73,7 @@ class CancelView(_BookingAction):
         return self.respond(request, booking)
 
 
+@extend_schema(summary="Rechazar reserva (anfitrión)", request=ReasonSerializer, responses=BookingSerializer)
 class RejectView(_BookingAction):
     permission_classes = [IsHostOrStaff]
 
@@ -74,6 +85,7 @@ class RejectView(_BookingAction):
         return self.respond(request, booking)
 
 
+@extend_schema(summary="Marcar reserva como completada (anfitrión)", request=None, responses=BookingSerializer)
 class CompleteView(_BookingAction):
     permission_classes = [IsHostOrStaff]
 
@@ -83,6 +95,7 @@ class CompleteView(_BookingAction):
         return self.respond(request, booking)
 
 
+@extend_schema(summary="Actualizar notas internas (anfitrión)", request=NotesSerializer, responses=BookingSerializer)
 class NotesView(_BookingAction):
     permission_classes = [IsHostOrStaff]
 
@@ -110,6 +123,9 @@ def _parse_range(request):
     return out
 
 
+@extend_schema(summary="Resumen de reservas por mes y oferta", parameters=[
+    OpenApiParameter("from", str, description="AAAA-MM-DD"), OpenApiParameter("to", str, description="AAAA-MM-DD")],
+    responses={200: OpenApiTypes.OBJECT})
 class ReportSummaryView(APIView):
     permission_classes = [IsHostOrStaff]
 
@@ -118,6 +134,9 @@ class ReportSummaryView(APIView):
         return Response(selectors.report_summary(request.user, date_from, date_to))
 
 
+@extend_schema(summary="Reporte de reservas (CSV)", parameters=[
+    OpenApiParameter("from", str, description="AAAA-MM-DD"), OpenApiParameter("to", str, description="AAAA-MM-DD")],
+    responses={(200, "text/csv"): OpenApiTypes.STR})
 class ReportBookingsCsvView(APIView):
     permission_classes = [IsHostOrStaff]
 
@@ -134,6 +153,9 @@ class ReportBookingsCsvView(APIView):
         return csv_response("reservas.csv", header, rows)
 
 
+@extend_schema(summary="Reporte de clientes (CSV)", parameters=[
+    OpenApiParameter("from", str, description="AAAA-MM-DD"), OpenApiParameter("to", str, description="AAAA-MM-DD")],
+    responses={(200, "text/csv"): OpenApiTypes.STR})
 class ReportGuestsCsvView(APIView):
     permission_classes = [IsHostOrStaff]
 

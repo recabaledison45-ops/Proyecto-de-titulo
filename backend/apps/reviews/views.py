@@ -2,12 +2,18 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework.views import APIView
 
 from . import selectors, services
 from .serializers import ReviewCreateSerializer, ReviewSerializer
 
 
+@extend_schema_view(
+    get=extend_schema(summary="Reseñas publicadas de una oferta", parameters=[
+        OpenApiParameter("listing", int, required=True, description="Id de la oferta")], responses=ReviewSerializer(many=True)),
+    post=extend_schema(summary="Reseñar una reserva", request=ReviewCreateSerializer, responses={201: ReviewSerializer}),
+)
 class ReviewListCreateView(APIView):
     def get_permissions(self):
         return [AllowAny()] if self.request.method in SAFE_METHODS else [IsAuthenticated()]

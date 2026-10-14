@@ -10,7 +10,8 @@ guías locales y actividades/tours** bajo un mismo motor de búsqueda, reservas,
 
 ```
 backend/
-├── manage.py
+├── manage.py · requirements.txt · .env.example
+├── Dockerfile · docker-compose.yml · entrypoint.sh
 ├── config/settings/{base,local,production}.py · urls.py · wsgi.py · asgi.py
 ├── apps/
 │   ├── users/      # registro, login JWT, roles huésped/anfitrión, perfil, seed_demo
@@ -47,6 +48,72 @@ npm run dev                         # http://localhost:5173
 Usuarios demo (clave `demo1234`): **`anfitrion`** (publica y gestiona), **`huesped`** (reserva) y **`admin`**
 (consola `http://127.0.0.1:8000/admin/`). Los correos se imprimen en la consola del backend.
 
+## Guía de ejecución paso a paso (backend)
+
+### 1. Clonar y preparar el entorno
+```bash
+git clone https://github.com/recabaledison45-ops/Proyecto-de-titulo.git
+cd Proyecto-de-titulo/backend
+cp .env.example .env               # edite SECRET_KEY y lo que necesite (Windows: copy .env.example .env)
+```
+> Si en su carpeta local quedó un `.venv/` o `db.sqlite3` antiguos, bórrelos: están en `.gitignore` y no se versionan.
+
+### 2A. Levantar **sin Docker** (desarrollo, SQLite)
+```bash
+python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+python manage.py migrate
+python manage.py seed_demo                               # opcional: datos de ejemplo
+python manage.py createsuperuser                         # para entrar a /admin/
+python manage.py runserver                               # http://127.0.0.1:8000
+```
+Para usar PostgreSQL sin Docker, ponga en `.env`: `DATABASE_URL=postgres://usuario:clave@localhost:5432/wexperiencias`.
+
+### 2B. Levantar **con Docker** (PostgreSQL + gunicorn)
+```bash
+cd backend
+cp .env.example .env
+# En .env defina como mínimo: SECRET_KEY (>= 32 caracteres), ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS, POSTGRES_PASSWORD
+# Para probar en tu PC sin HTTPS agrega además: SECURE_SSL_REDIRECT=false  y  ALLOWED_HOSTS=localhost,127.0.0.1
+docker compose up -d --build
+docker compose logs -f web                               # migra, recolecta estáticos y arranca gunicorn
+docker compose exec web python manage.py createsuperuser
+```
+El contenedor ejecuta `entrypoint.sh`: espera a la base → `migrate` → `collectstatic` → (superusuario si define
+`DJANGO_SUPERUSER_USERNAME/EMAIL/PASSWORD`) → `gunicorn`. Los datos persisten en los volúmenes `postgres_data` y `media_data`.
+Detener: `docker compose down` (agregue `-v` solo si quiere borrar la base).
+
+> **Producción es estricta a propósito:** se niega a arrancar si falta `SECRET_KEY` (≥ 32 caracteres), `ALLOWED_HOSTS`
+> o `CORS_ALLOWED_ORIGINS`, o si alguno contiene `*` o localhost. Para probar el contenedor en su PC, ponga en
+> `CORS_ALLOWED_ORIGINS` un dominio de ejemplo con https (p. ej. `https://app.ejemplo.cl`); para desarrollo del frontend use
+> la opción 2A (settings `local`, que permite `http://localhost:5173`).
+
+### 3. Probar los endpoints
+**Swagger UI:** `http://127.0.0.1:8000/api/docs/` (esquema OpenAPI en `/api/schema/`). Siempre visible en local; en producción
+actívelo con `ENABLE_API_DOCS=true`. Pulse **Authorize** y pegue el `access` token del login.
+
+**cURL:**
+```bash
+B=http://127.0.0.1:8000/api/v1
+curl $B/health/
+curl -X POST $B/auth/register/ -H 'Content-Type: application/json' \
+  -d '{"username":"anfi","email":"anfi@mail.cl","password":"Contr4sena-larga-9","role":"host"}'
+TOKEN=$(curl -s -X POST $B/auth/login/ -H 'Content-Type: application/json' \
+  -d '{"username":"anfi","password":"Contr4sena-larga-9"}' | python -c "import sys,json;print(json.load(sys.stdin)['access'])")
+curl -X POST $B/listings/ -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"title":"Cata de vinos en Talca","category":"activity","city":"Talca","latitude":-35.43,"longitude":-71.66,"price_per_night":25000,"max_guests":8,"booking_mode":"shared"}'
+curl "$B/listings/?category=activity"
+```
+**Postman:** *Import → Link* con `http://127.0.0.1:8000/api/schema/` y autorización *Bearer Token*.
+
+### 4. Desplegar en un PaaS (Railway / Render) o VPS
+- **Railway / Render:** apunte el servicio a `backend/` (usa el `Dockerfile`), agregue un PostgreSQL y defina
+  `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` y `DATABASE_URL` (la entrega la plataforma).
+  La plataforma inyecta `PORT`; su proxy TLS envía `X-Forwarded-Proto`, ya contemplado. Para las imágenes subidas monte un
+  volumen en `/app/media` y use `SERVE_MEDIA=true`.
+- **VPS:** `docker compose up -d --build` detrás de Nginx/Caddy con TLS (proxy a `127.0.0.1:8000` con la cabecera
+  `X-Forwarded-Proto`). Con Nginx puede servir `/media/` desde el volumen y dejar `SERVE_MEDIA=false`.
+
 ### Pruebas
 ```bash
 cd backend
@@ -64,7 +131,7 @@ DB_ENGINE=postgres DB_NAME=wexp DB_USER=postgres DB_PASSWORD=... DB_HOST=localho
 ```
 
 ## Variables de entorno (backend, ver `backend/.env.example`)
-`SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `DB_ENGINE` (`sqlite`|`postgres`) + `DB_*`,
+`SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `DATABASE_URL` (o `DB_ENGINE` + `DB_*`), `ENABLE_API_DOCS`, `SERVE_MEDIA`,
 `PLATFORM_FEE_PERCENT` (10), `BOOKING_PENDING_HOURS` (48), `PAYMENT_GATEWAY` (`bank_transfer`|`simulated`),
 `REVIEW_REQUIRE_CHECKOUT_PASSED`, `EMAIL_*`, `MEDIA_ROOT`. Producción: `DJANGO_SETTINGS_MODULE=config.settings.production`
 (exige `SECRET_KEY` y `ALLOWED_HOSTS`, activa HTTPS/HSTS y cookies seguras).

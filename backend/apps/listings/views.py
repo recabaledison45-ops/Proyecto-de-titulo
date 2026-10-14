@@ -3,6 +3,8 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 
 from shared.permissions import IsHost, IsOwnerOrReadOnly
@@ -68,6 +70,7 @@ class ListingDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(summary="Fechas ocupadas de una oferta", responses={200: OpenApiTypes.OBJECT})
 class BookedDatesView(APIView):
     permission_classes = [AllowAny]
 

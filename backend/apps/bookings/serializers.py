@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.users.serializers import PublicUserSerializer
@@ -35,6 +37,7 @@ class BookingSerializer(serializers.Serializer):
     payment = serializers.SerializerMethodField()
     reviewed_by_me = serializers.SerializerMethodField()
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_listing(self, obj):
         l = obj.listing
         request = self.context.get("request")
@@ -42,10 +45,12 @@ class BookingSerializer(serializers.Serializer):
         return {"id": l.id, "title": l.title, "category": l.category, "city": l.city, "image_url": image,
                 "booking_mode": l.booking_mode}
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_guest(self, obj):
         data = PublicUserSerializer(obj.guest).data
         return {"id": data["id"], "username": obj.guest.username, "display_name": data["display_name"]}
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_payment(self, obj):
         p = getattr(obj, "payment", None)
         if p is None:
@@ -54,6 +59,7 @@ class BookingSerializer(serializers.Serializer):
                 "platform_fee": str(p.platform_fee), "host_payout": str(p.host_payout),
                 "reported_at": p.reported_at, "confirmed_at": p.confirmed_at, "refunded_at": p.refunded_at}
 
+    @extend_schema_field(OpenApiTypes.BOOL)
     def get_reviewed_by_me(self, obj):
         user = self.context["request"].user
         return any(r.author_id == user.id for r in obj.reviews.all())
