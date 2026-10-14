@@ -78,7 +78,7 @@ export default function MyBookings() {
       {items && items.length === 0 && (
         <div className="rounded-xl border border-dashed p-10 text-center">
           <p className="text-muted-foreground">Aún no tienes reservas.</p>
-          <Button className="mt-4" asChild><Link to="/">Explorar experiencias</Link></Button>
+          <Button className="mt-4" asChild><Link to="/explore">Explorar experiencias</Link></Button>
         </div>
       )}
       <div className="grid gap-4">{items?.map((b) => <BookingItem key={b.id} b={b} reload={load} />)}</div>

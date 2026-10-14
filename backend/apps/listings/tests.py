@@ -126,6 +126,16 @@ class ListingSearchTests(BaseAPITest):
         self.assertEqual(self.ids(max_duration_hours=3), set())
         self.assertIn(self.guide.id, self.ids(max_duration_hours=6))
 
+    def test_free_text_search(self):
+        self.assertIn(self.listing.id, self.ids(q="constitución"))
+        self.assertIn(self.listing.id, self.ids(q="Cabaña"))
+        self.assertEqual(self.ids(q="no-existe-xyz"), set())
+
+    def test_order_by_rating_puts_unrated_last(self):
+        r = self.client.get(LIST, {"ordering": "-rating"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["count"], 3)
+
     def test_pagination_and_ordering(self):
         r = self.client.get(LIST, {"page_size": 2, "ordering": "price_per_night"})
         self.assertEqual(r.data["count"], 3)

@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, F, Q
 
 from apps.bookings import selectors as booking_selectors
 
@@ -16,6 +16,7 @@ ORDERING = {
     "-created_at": "-created_at",
     "title": "title",
     "-title": "-title",
+    "-rating": None,  # mejor valoradas primero (se resuelve en search_listings)
 }
 
 
@@ -39,6 +40,10 @@ def search_listings(params, user):
                           ("lng_min", "longitude__gte"), ("lng_max", "longitude__lte")):
         if params.get(field) is not None:
             qs = qs.filter(**{lookup: params[field]})
+    term = (params.get("q") or "").strip()
+    if term:  # búsqueda libre por título, ciudad, dirección o descripción
+        qs = qs.filter(Q(title__icontains=term) | Q(city__icontains=term) | Q(address__icontains=term)
+                       | Q(description__icontains=term))
     if params.get("category"):
         qs = qs.filter(category=params["category"])
     if params.get("difficulty"):
@@ -53,8 +58,10 @@ def search_listings(params, user):
         )
         qs = qs.exclude(pk__in=blocked)
 
-    ordering = ORDERING.get(params.get("ordering"), "-created_at")
-    return qs.order_by(ordering, "-id")
+    key = params.get("ordering")
+    if key == "-rating":
+        return qs.order_by(F("rating_avg").desc(nulls_last=True), "-reviews_count", "-id")
+    return qs.order_by(ORDERING.get(key) or "-created_at", "-id")
 
 
 def get_listing(pk):

@@ -22,6 +22,7 @@ class SearchParamsSerializer(serializers.Serializer):
     check_out = serializers.DateField(required=False)
     guests = serializers.IntegerField(required=False, min_value=1)
     mine = serializers.BooleanField(required=False)
+    q = serializers.CharField(required=False, allow_blank=True, max_length=100)
     ordering = serializers.CharField(required=False)
 
     def validate(self, attrs):

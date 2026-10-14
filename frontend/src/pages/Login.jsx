@@ -4,8 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { errorMessage } from '@/api/client'
+import AuthShell from '@/components/AuthShell'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
@@ -34,39 +34,37 @@ export default function Login() {
   }
 
   return (
-    <div className="mx-auto flex max-w-md px-4 py-12">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl">Ingresar</CardTitle>
-          <CardDescription>Accede para reservar o gestionar tus ofertas.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4" noValidate>
-              <FormField control={form.control} name="username" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Usuario</FormLabel>
-                  <FormControl><Input autoComplete="username" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
-                  <FormControl><Input type="password" autoComplete="current-password" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Ingresando…' : 'Ingresar'}
-              </Button>
-              <p className="text-center text-sm text-muted-foreground">
-                ¿No tienes cuenta? <Link to="/register" className="font-medium text-primary underline">Regístrate</Link>
-              </p>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell
+      title="Te damos la bienvenida"
+      subtitle="Ingresa para reservar o gestionar tus ofertas."
+      footer={<>¿No tienes cuenta? <Link to="/register" className="font-semibold text-foreground underline">Regístrate</Link></>}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4" noValidate>
+          <FormField control={form.control} name="username" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Usuario</FormLabel>
+              <FormControl><Input className="h-12" autoComplete="username" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="password" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contraseña</FormLabel>
+              <FormControl><Input className="h-12" type="password" autoComplete="current-password" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Ingresando…' : 'Ingresar'}
+          </Button>
+        </form>
+      </Form>
+      {import.meta.env.DEV && (
+        <p className="mt-6 rounded-xl bg-secondary p-3 text-xs text-muted-foreground">
+          Modo desarrollo · usuarios de prueba (tras <code>seed_demo</code>): <strong>huesped</strong>, <strong>anfitrion</strong> o <strong>admin</strong>, clave <strong>demo1234</strong>.
+        </p>
+      )}
+    </AuthShell>
   )
 }

@@ -48,6 +48,12 @@ npm run dev                         # http://localhost:5173
 Usuarios demo (clave `demo1234`): **`anfitrion`** (publica y gestiona), **`huesped`** (reserva) y **`admin`**
 (consola `http://127.0.0.1:8000/admin/`). Los correos se imprimen en la consola del backend.
 
+## Interfaz (rediseño estilo Airbnb / Tripadvisor)
+Rutas del frontend: `/` portada con buscador, categorías y secciones · `/explore` lista + mapa con filtros (la URL guarda los
+filtros: `?q=&category=&dest=&check_in=&check_out=&guests=&difficulty=`) · `/listings/:id` detalle con reserva ·
+`/favorites` favoritos (se guardan en el navegador) · `/bookings` mis reservas · `/account` panel de anfitrión.
+El backend añade búsqueda de texto (`GET /api/v1/listings/?q=`) y `ordering=-rating` (mejor valoradas primero).
+
 ## Guía de ejecución paso a paso (backend)
 
 ### 1. Clonar y preparar el entorno
@@ -117,7 +123,7 @@ curl "$B/listings/?category=activity"
 ### Pruebas
 ```bash
 cd backend
-python manage.py test               # 65 pruebas (1 se omite sin PostgreSQL)
+python manage.py test               # 67 pruebas (1 se omite sin PostgreSQL)
 coverage run --source=apps manage.py test && coverage report
 ```
 Reglas de negocio pedidas: 1) solape → 409 · 2) reservas consecutivas permitidas · 3) cancelar libera fechas ·

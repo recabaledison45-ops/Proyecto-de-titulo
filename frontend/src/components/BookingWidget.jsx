@@ -1,15 +1,13 @@
 import { useMemo, useState } from 'react'
 import { differenceInCalendarDays } from 'date-fns'
+import { Minus, Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { createBooking } from '@/api/bookings'
 import { errorMessage } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
+import { StarDisplay } from '@/components/Stars'
 import { useAuth } from '@/hooks/useAuth'
 import { fmtDate, fromISODate, money, toISODate } from '@/lib/format'
 import { computeTotal, priceUnit, unitWord } from '@/lib/labels'
@@ -69,39 +67,55 @@ export default function BookingWidget({ listing, booked, onBooked }) {
   }
 
   return (
-    <Card className="lg:sticky lg:top-20">
-      <CardHeader>
-        <CardTitle className="text-2xl">
+    <div id="reservar" className="rounded-3xl border bg-card p-6 shadow-xl lg:sticky lg:top-24">
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-2xl font-extrabold">
           {money(listing.price_per_night)} <span className="text-sm font-normal text-muted-foreground">{priceUnit(listing)}</span>
-        </CardTitle>
-        {shared && <p className="text-xs text-muted-foreground">Actividad grupal: cupos limitados por fecha ({listing.max_guests} personas).</p>}
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="flex justify-center overflow-x-auto">
-          <Calendar mode="range" selected={range} onSelect={onSelect} disabled={disabledDays} numberOfMonths={1} />
+        </p>
+        {listing.rating_avg != null && (
+          <p className="flex items-center gap-1.5 text-sm"><StarDisplay value={listing.rating_avg} /><span className="font-semibold">{listing.rating_avg}</span></p>
+        )}
+      </div>
+      {shared && <p className="mt-1 text-xs text-muted-foreground">Actividad grupal: cupos limitados por fecha ({listing.max_guests} personas).</p>}
+
+      <div className="mt-4 flex justify-center overflow-x-auto rounded-2xl border p-2">
+        <Calendar mode="range" selected={range} onSelect={onSelect} disabled={disabledDays} numberOfMonths={1} />
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border p-4">
+        <div>
+          <p id="guests-label" className="text-sm font-semibold">Personas</p>
+          <p className="text-xs text-muted-foreground">Máximo {listing.max_guests}</p>
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="guests">Personas (máx. {listing.max_guests})</Label>
-          <Input id="guests" type="number" min={1} max={listing.max_guests} value={guests} onChange={(e) => setGuests(e.target.value)} />
+        <div className="flex items-center gap-3" role="group" aria-labelledby="guests-label">
+          <button type="button" aria-label="Menos personas" disabled={guestsN <= 1} onClick={() => setGuests(guestsN - 1)}
+            className="flex size-9 items-center justify-center rounded-full border border-foreground/30 hover:border-foreground disabled:opacity-30"><Minus className="size-4" /></button>
+          <output id="guests" aria-live="polite" className="w-6 text-center text-base font-semibold">{guestsN}</output>
+          <button type="button" aria-label="Más personas" disabled={guestsN >= listing.max_guests} onClick={() => setGuests(guestsN + 1)}
+            className="flex size-9 items-center justify-center rounded-full border border-foreground/30 hover:border-foreground disabled:opacity-30"><Plus className="size-4" /></button>
         </div>
-        <Separator />
+      </div>
+
+      <div className="mt-4">
         {nights > 0 ? (
-          <dl className="grid gap-1 text-sm" aria-live="polite">
-            <div className="flex justify-between"><dt>Llegada</dt><dd>{fmtDate(range.from)}</dd></div>
-            <div className="flex justify-between"><dt>Salida</dt><dd>{fmtDate(range.to)}</dd></div>
-            <div className="flex justify-between">
-              <dt>{money(listing.price_per_night)} × {nights} {unitWord(listing.category, nights)}{shared ? ` × ${guestsN} pers.` : ''}</dt>
+          <dl className="grid gap-1.5 text-sm" aria-live="polite">
+            <div className="flex justify-between"><dt>Llegada</dt><dd className="font-medium">{fmtDate(range.from)}</dd></div>
+            <div className="flex justify-between"><dt>Salida</dt><dd className="font-medium">{fmtDate(range.to)}</dd></div>
+            <div className="flex justify-between gap-3">
+              <dt className="underline decoration-dotted">{money(listing.price_per_night)} × {nights} {unitWord(listing.category, nights)}{shared ? ` × ${guestsN} pers.` : ''}</dt>
               <dd>{money(total)}</dd>
             </div>
-            <div className="flex justify-between border-t pt-2 text-base font-semibold"><dt>Total</dt><dd>{money(total)}</dd></div>
+            <div className="flex justify-between border-t pt-3 text-lg font-extrabold"><dt>Total</dt><dd>{money(total)}</dd></div>
           </dl>
         ) : (
           <p className="text-sm text-muted-foreground">Elige llegada y salida en el calendario para ver el total. La salida no cuenta como día ocupado.</p>
         )}
-        <Button size="lg" disabled={busy || nights < 1 || isOwner} onClick={reserve}>
-          {isOwner ? 'Es tu propia oferta' : busy ? 'Reservando…' : user ? 'Reservar' : 'Ingresar para reservar'}
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+
+      <Button size="lg" className="mt-4 w-full text-base" disabled={busy || nights < 1 || isOwner} onClick={reserve}>
+        {isOwner ? 'Es tu propia oferta' : busy ? 'Reservando…' : user ? 'Reservar' : 'Ingresar para reservar'}
+      </Button>
+      <p className="mt-3 text-center text-xs text-muted-foreground">No se te cobra todavía: pagas por transferencia después de reservar.</p>
+    </div>
   )
 }

@@ -1,14 +1,21 @@
 import L from 'leaflet'
+export { MAULE_CENTER } from '@/lib/destinations'
 import { moneyShort } from '@/lib/format'
 
-// Teselas configurables por entorno (revisar términos de uso del proveedor antes de producción).
-export const TILE_URL = import.meta.env.VITE_TILE_URL || 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+// Teselas configurables por entorno. Por defecto OpenStreetMap (gratis, sin clave; respeta su política de uso y atribución).
+export const TILE_URL = import.meta.env.VITE_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 export const TILE_ATTRIBUTION =
   import.meta.env.VITE_TILE_ATTRIBUTION ||
-  'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 export const MAP_STYLES = [
-  { id: 'terrain', label: 'Relieve', url: TILE_URL, attribution: TILE_ATTRIBUTION },
+  { id: 'osm', label: 'Claro', url: TILE_URL, attribution: TILE_ATTRIBUTION },
+  {
+    id: 'terrain',
+    label: 'Relieve',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+  },
   {
     id: 'streets',
     label: 'Calles',
@@ -29,7 +36,6 @@ export const MAP_STYLES = [
   },
 ]
 
-export const MAULE_CENTER = [-35.45, -72.0]
 
 const cache = new Map()
 export function priceIcon(price, active) {

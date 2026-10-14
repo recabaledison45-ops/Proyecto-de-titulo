@@ -9,9 +9,13 @@ DEBUG = False  # nunca configurable en producción
 # --- Variables obligatorias -----------------------------------------------------
 if SECRET_KEY.startswith("dev-insecure-key") or len(SECRET_KEY) < 32:
     raise ImproperlyConfigured("Defina SECRET_KEY (mínimo 32 caracteres) en el entorno de producción.")
-if not env("ALLOWED_HOSTS"):
+# Render entrega su dominio público en RENDER_EXTERNAL_HOSTNAME; se suma a los hosts declarados.
+_render_host = env("RENDER_EXTERNAL_HOSTNAME")
+if not env("ALLOWED_HOSTS") and not _render_host:
     raise ImproperlyConfigured("Defina ALLOWED_HOSTS en el entorno de producción.")
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS") + ([_render_host] if _render_host else [])
+if _render_host:
+    CSRF_TRUSTED_ORIGINS = list(CSRF_TRUSTED_ORIGINS) + [f"https://{_render_host}"]  # noqa: F405
 if "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("ALLOWED_HOSTS no puede contener '*' en producción.")
 

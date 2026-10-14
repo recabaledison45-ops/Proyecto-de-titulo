@@ -48,5 +48,10 @@ if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:
     || echo "[entrypoint] El superusuario ya existía; se omite."
 fi
 
+if [ "${SEED_DEMO:-false}" = "true" ]; then
+  echo "[entrypoint] Cargando datos de demostración (idempotente)..."
+  python manage.py seed_demo || echo "[entrypoint] No se pudieron cargar los datos demo."
+fi
+
 echo "[entrypoint] Iniciando: $*"
 exec "$@"

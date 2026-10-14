@@ -15,7 +15,7 @@ export default function RequireAuth({ role, children }) {
       <div className="mx-auto max-w-lg p-10 text-center">
         <h1 className="text-2xl font-semibold">Solo para anfitriones</h1>
         <p className="mt-2 text-muted-foreground">Tu cuenta es de huésped. Crea una cuenta de anfitrión para publicar ofertas.</p>
-        <Button className="mt-4" asChild><Link to="/">Volver a explorar</Link></Button>
+        <Button className="mt-4" asChild><Link to="/explore">Volver a explorar</Link></Button>
       </div>
     )
   }

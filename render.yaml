@@ -1,0 +1,39 @@
+# Blueprint de Render: crea el backend (Docker) y una base PostgreSQL.
+# Uso: Render > New > Blueprint > selecciona el repositorio. Luego completa las variables marcadas "sync: false".
+services:
+  - type: web
+    name: wexperiencias-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/v1/health/
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wexperiencias-db
+          property: connectionString
+      - key: CORS_ALLOWED_ORIGINS      # tu dominio de Vercel, ej. https://wexperiencias.vercel.app
+        sync: false
+      - key: FRONTEND_URL              # el mismo dominio de Vercel
+        sync: false
+      - key: SEED_DEMO
+        value: "true"
+      - key: ENABLE_API_DOCS
+        value: "true"
+      - key: SERVE_MEDIA
+        value: "true"
+      - key: PAYMENT_GATEWAY
+        value: bank_transfer
+      - key: REVIEW_REQUIRE_CHECKOUT_PASSED
+        value: "false"
+
+databases:
+  - name: wexperiencias-db
+    plan: free
+    databaseName: wexperiencias
+    user: wexp
