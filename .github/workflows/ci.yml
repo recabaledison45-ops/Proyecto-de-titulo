@@ -192,4 +192,8 @@ jobs:
       - name: Sintaxis de docker-compose de producción
         run: |
           cp deploy/.env.prod.example deploy/.env.prod
-          docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod config -q
+          docker compose version
+          if ! OUT=$(docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod config -q 2>&1); then
+            echo "::error title=docker compose config::$(echo "$OUT" | tr '\n' ' ')"
+            exit 1
+          fi
