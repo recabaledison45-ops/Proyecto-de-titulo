@@ -50,3 +50,7 @@ STORAGES = {
 # --- Correo y reglas ----------------------------------------------------------------------
 EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 REVIEW_REQUIRE_CHECKOUT_PASSED = env_bool("REVIEW_REQUIRE_CHECKOUT_PASSED", True)
+
+# HSTS preload es un compromiso difícil de revertir (el dominio entra en la lista de los navegadores):
+# se decide aparte, cuando el dominio definitivo esté estable. El resto de `check --deploy` debe quedar sin avisos.
+SILENCED_SYSTEM_CHECKS = ["security.W021"]

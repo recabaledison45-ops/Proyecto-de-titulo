@@ -9,7 +9,7 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { useFavorites } from '@/lib/favorites'
 
 export default function Favorites() {
-  usePageTitle('Favoritos')
+  usePageTitle('Favoritos', { noindex: true })
   const { ids } = useFavorites()
   const [items, setItems] = useState({})
 

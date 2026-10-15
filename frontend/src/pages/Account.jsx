@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function Account() {
-  usePageTitle('Mi cuenta')
+  usePageTitle('Mi cuenta', { noindex: true })
   const [tab, setTab] = useState('bookings')
   const [editing, setEditing] = useState(null) // oferta en edición, o null para publicar una nueva
   const [listingsVersion, setListingsVersion] = useState(0)

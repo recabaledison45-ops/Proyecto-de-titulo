@@ -253,15 +253,17 @@ export default function Explore() {
         </section>
 
         <section aria-label="Mapa" className={cn('relative min-h-0 flex-1 lg:block', mobileView === 'map' ? 'block' : 'hidden')}>
-          <div className="absolute top-3 right-3 z-[1000] w-44 rounded-xl bg-card/95 p-2 shadow-lg backdrop-blur">
-            <Label htmlFor="map-style" className="mb-1 block text-xs">Estilo del mapa</Label>
-            <Select value={mapStyle.id} onValueChange={(id) => setMapStyle(MAP_STYLES.find((s) => s.id === id) ?? MAP_STYLES[0])}>
-              <SelectTrigger id="map-style" className="bg-background"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MAP_STYLES.map((style) => <SelectItem key={style.id} value={style.id}>{style.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {MAP_STYLES.length > 1 && (
+            <div className="absolute top-3 right-3 z-[1000] w-44 rounded-xl bg-card/95 p-2 shadow-lg backdrop-blur">
+              <Label htmlFor="map-style" className="mb-1 block text-xs">Estilo del mapa</Label>
+              <Select value={mapStyle.id} onValueChange={(id) => setMapStyle(MAP_STYLES.find((s) => s.id === id) ?? MAP_STYLES[0])}>
+                <SelectTrigger id="map-style" className="bg-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MAP_STYLES.map((style) => <SelectItem key={style.id} value={style.id}>{style.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <MapContainer center={initialView.center} zoom={initialView.zoom} className="h-full w-full" scrollWheelZoom>
             <TileLayer key={mapStyle.id} url={mapStyle.url} attribution={mapStyle.attribution} />
             <BoundsWatcher onChange={setBounds} />

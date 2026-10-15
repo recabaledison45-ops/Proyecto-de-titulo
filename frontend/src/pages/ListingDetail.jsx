@@ -24,10 +24,10 @@ const Avatar = ({ name, className = 'size-12 text-lg' }) => (
 
 function Fact({ icon: Icon, label, children }) {
   return (
-    <div className="flex items-start gap-4">
+    <li className="flex items-start gap-4">
       <Icon className="mt-0.5 size-6 shrink-0" aria-hidden="true" strokeWidth={1.75} />
-      <div><dt className="font-semibold">{label}</dt><dd className="text-sm text-muted-foreground">{children}</dd></div>
-    </div>
+      <div><p className="font-semibold">{label}</p><p className="text-sm text-muted-foreground">{children}</p></div>
+    </li>
   )
 }
 
@@ -41,7 +41,7 @@ function ListingDetailView({ id }) {
   const [booked, setBooked] = useState(null)
   const [reviews, setReviews] = useState([])
   const [state, setState] = useState('loading')
-  usePageTitle(listing?.title)
+  usePageTitle(listing?.title, { description: listing?.description || undefined })
 
   const loadBooked = useCallback(() => bookedDates(id).then(setBooked).catch(() => {}), [id])
 
@@ -117,14 +117,14 @@ function ListingDetailView({ id }) {
           {hasSheet && (
             <section aria-labelledby="ficha" className="border-b pb-8">
               <h2 id="ficha" className="mb-5 text-xl font-bold">Lo que debes saber</h2>
-              <dl className="grid gap-5 sm:grid-cols-2">
+              <ul className="grid gap-5 sm:grid-cols-2">
                 <Fact icon={Users} label="Capacidad">{listing.max_guests} personas como máximo</Fact>
                 {listing.duration_hours && <Fact icon={Clock} label="Duración">{Number(listing.duration_hours)} horas</Fact>}
                 {listing.difficulty && <Fact icon={Mountain} label="Dificultad">{DIFFICULTY[listing.difficulty]}</Fact>}
                 <Fact icon={Tag} label="Precio">{money(listing.price_per_night)} {priceUnit(listing)}</Fact>
                 {listing.dress_code && <Fact icon={Shirt} label="Qué llevar">{listing.dress_code}</Fact>}
                 {listing.wellness_benefits && <Fact icon={Sparkles} label="Beneficios de bienestar">{listing.wellness_benefits}</Fact>}
-              </dl>
+              </ul>
             </section>
           )}
 

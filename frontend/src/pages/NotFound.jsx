@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function NotFound() {
-  usePageTitle('Página no encontrada')
+  usePageTitle('Página no encontrada', { noindex: true })
   return (
     <div className="mx-auto max-w-lg p-10 text-center">
       <h1 className="text-3xl font-semibold">No encontramos esa página</h1>

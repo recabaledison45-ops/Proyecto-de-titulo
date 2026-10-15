@@ -2,14 +2,30 @@ import L from 'leaflet'
 export { MAULE_CENTER } from '@/lib/destinations'
 import { moneyShort } from '@/lib/format'
 
-// Teselas configurables por entorno. Por defecto OpenStreetMap (gratis, sin clave; respeta su política de uso y atribución).
-export const TILE_URL = import.meta.env.VITE_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-export const TILE_ATTRIBUTION =
-  import.meta.env.VITE_TILE_ATTRIBUTION ||
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+// ---------------------------------------------------------------------------
+// Proveedor de teselas (decisión F-69, ver docs/DECISION-TESELAS.md)
+//   · Producción: un proveedor comercial con clave (recomendado: MapTiler) definido con
+//     VITE_TILE_URL + VITE_TILE_ATTRIBUTION. La clave es pública por diseño: restrínjala por dominio
+//     (HTTP referrer) en el panel del proveedor.
+//   · Desarrollo y pruebas: si no hay VITE_TILE_URL se usa OpenStreetMap (sin clave; su política lo
+//     limita a un uso moderado y sin garantía de servicio, por eso NO es la opción de producción).
+//   · Las capas gratuitas extra (relieve, calles, satélite) no tienen contrato para producción; solo se
+//     ofrecen en desarrollo o si se define VITE_MAP_EXTRA_STYLES=true.
+// ---------------------------------------------------------------------------
+const OSM_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
-export const MAP_STYLES = [
-  { id: 'osm', label: 'Claro', url: TILE_URL, attribution: TILE_ATTRIBUTION },
+export const TILE_URL = import.meta.env.VITE_TILE_URL || OSM_URL
+export const TILE_ATTRIBUTION = import.meta.env.VITE_TILE_ATTRIBUTION || OSM_ATTRIBUTION
+
+const BASE_STYLE = {
+  id: 'base',
+  label: import.meta.env.VITE_TILE_URL ? 'Mapa' : 'Claro',
+  url: TILE_URL,
+  attribution: TILE_ATTRIBUTION,
+}
+
+const EXTRA_STYLES = [
   {
     id: 'terrain',
     label: 'Relieve',
@@ -36,6 +52,8 @@ export const MAP_STYLES = [
   },
 ]
 
+const showExtras = import.meta.env.DEV || import.meta.env.VITE_MAP_EXTRA_STYLES === 'true'
+export const MAP_STYLES = showExtras ? [BASE_STYLE, ...EXTRA_STYLES] : [BASE_STYLE]
 
 const cache = new Map()
 export function priceIcon(price, active) {

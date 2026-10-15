@@ -61,7 +61,7 @@ function BookingItem({ b, reload }) {
 }
 
 export default function MyBookings() {
-  usePageTitle('Mis reservas')
+  usePageTitle('Mis reservas', { noindex: true })
   const [items, setItems] = useState(null)
   const [error, setError] = useState('')
 

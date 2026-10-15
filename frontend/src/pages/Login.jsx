@@ -17,7 +17,7 @@ const schema = z.object({
 })
 
 export default function Login() {
-  usePageTitle('Ingresar')
+  usePageTitle('Ingresar', { noindex: true })
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()

@@ -141,6 +141,10 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(env("MEDIA_ROOT", str(BASE_DIR / "media")))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
+# Proxies de confianza delante de Django (Nginx = 1). Define qué entrada de X-Forwarded-For es el cliente real:
+# sin esto un atacante puede rotar la cabecera para evadir el límite de peticiones. Vacío = comportamiento por defecto de DRF.
+NUM_PROXIES = int(env("NUM_PROXIES")) if env("NUM_PROXIES", "").strip() else None
+
 # --- DRF: solo JSON, JWT por cabecera Authorization ---
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework_simplejwt.authentication.JWTAuthentication"],
@@ -158,12 +162,14 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",
     ],
+    # Los límites se pueden subir por entorno solo para pruebas de carga (k6) desde una única IP.
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "300/min",
-        "user": "600/min",
-        "login": "5/min",
-        "register": "10/min",
+        "anon": env("THROTTLE_RATE_ANON", "300/min"),
+        "user": env("THROTTLE_RATE_USER", "600/min"),
+        "login": env("THROTTLE_RATE_LOGIN", "5/min"),
+        "register": env("THROTTLE_RATE_REGISTER", "10/min"),
     },
+    "NUM_PROXIES": NUM_PROXIES,
 }
 
 SIMPLE_JWT = {

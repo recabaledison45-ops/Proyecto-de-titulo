@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Reemplace el dominio por el real antes de publicar. -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://wexperiencias.example.cl/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
-  <url><loc>https://wexperiencias.example.cl/login</loc><priority>0.3</priority></url>
-  <url><loc>https://wexperiencias.example.cl/register</loc><priority>0.3</priority></url>
-</urlset>

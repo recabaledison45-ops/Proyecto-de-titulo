@@ -20,7 +20,7 @@ const schema = z.object({
 })
 
 export default function Register() {
-  usePageTitle('Crear cuenta')
+  usePageTitle('Crear cuenta', { noindex: true })
   const { register } = useAuth()
   const navigate = useNavigate()
   const [search] = useSearchParams()

@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /account
-Disallow: /bookings
-
-# Reemplace el dominio por el real antes de publicar.
-Sitemap: https://wexperiencias.example.cl/sitemap.xml
