@@ -1,0 +1,195 @@
+name: CI
+
+# Pruebas automáticas en cada push a main y en cada Pull Request (F-20).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call: # lo reutiliza deploy.yml: no se despliega nada que no pase las pruebas
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend · pruebas (PostgreSQL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: wexp_test
+          POSTGRES_USER: wexp
+          POSTGRES_PASSWORD: wexp-ci-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wexp -d wexp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      SECRET_KEY: ci-only-secret-key-not-used-anywhere-else-0123456789
+      # Con PostgreSQL también corre la prueba de concurrencia real (select_for_update), que se omite en SQLite.
+      DATABASE_URL: postgres://wexp:wexp-ci-password@localhost:5432/wexp_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Verificación de configuración
+        run: python manage.py check
+      - name: No faltan migraciones
+        run: python manage.py makemigrations --check --dry-run
+      - name: Verificación de producción (check --deploy)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          ALLOWED_HOSTS: ejemplo.cl
+          CORS_ALLOWED_ORIGINS: https://ejemplo.cl
+          SECRET_KEY: ci-only-secret-key-for-deploy-check-7f3a9c1e5b2d8046-aaaaaaaaaaaaaaaaaaaaaaaa
+        run: python manage.py check --deploy --fail-level WARNING
+      - name: Pruebas con cobertura
+        run: |
+          coverage run --source=apps,shared manage.py test --verbosity 2
+          coverage report --fail-under=90
+          coverage xml
+      - name: Esquema OpenAPI válido
+        run: python manage.py spectacular --file /tmp/schema.yml --validate --fail-on-warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend · lint y build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - name: Build
+        env:
+          SITE_URL: https://wexperiencias.example.cl
+        run: npm run build
+      - name: Archivos de SEO generados
+        run: |
+          test -s dist/robots.txt && test -s dist/sitemap.xml
+          grep -q "Sitemap: https://wexperiencias.example.cl/sitemap.xml" dist/robots.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  e2e:
+    name: E2E · Playwright + accesibilidad
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      E2E_PYTHON: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci
+        working-directory: frontend
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - name: Pruebas E2E (levanta backend y frontend solos)
+        run: npx playwright test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/results
+          retention-days: 14
+          if-no-files-found: ignore
+
+  docker:
+    name: Docker · imágenes y arranque
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Construir imagen del backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          load: true
+          tags: wexperiencias-backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+      - name: Construir imagen de Nginx + frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/nginx/Dockerfile
+          load: true
+          tags: wexperiencias-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: El backend arranca y responde /health/
+        run: |
+          docker run -d --name api -p 8000:8000 \
+            -e SECRET_KEY=ci-only-secret-key-for-container-smoke-test-0123456789abcdef \
+            -e ALLOWED_HOSTS=localhost,127.0.0.1 \
+            -e CORS_ALLOWED_ORIGINS=https://ejemplo.cl \
+            -e SECURE_SSL_REDIRECT=false \
+            -e DATABASE_URL=sqlite:////tmp/ci.sqlite3 \
+            wexperiencias-backend:ci
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8000/api/v1/health/; then echo; exit 0; fi
+            sleep 3
+          done
+          docker logs api
+          exit 1
+      - name: La configuración de Nginx es válida
+        run: |
+          mkdir -p /tmp/certs/live/ejemplo.cl
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj "/CN=ejemplo.cl" \
+            -keyout /tmp/certs/live/ejemplo.cl/privkey.pem -out /tmp/certs/live/ejemplo.cl/fullchain.pem
+          docker run --rm --add-host web:127.0.0.1 -e DOMAIN=ejemplo.cl \
+            -v /tmp/certs:/etc/letsencrypt:ro wexperiencias-web:ci \
+            sh -c "/docker-entrypoint.d/20-envsubst-on-templates.sh && nginx -t"
+      - name: Sintaxis de docker-compose de producción
+        run: |
+          cp deploy/.env.prod.example deploy/.env.prod
+          docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod config -q

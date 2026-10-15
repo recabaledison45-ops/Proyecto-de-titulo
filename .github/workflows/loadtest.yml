@@ -1,0 +1,72 @@
+name: Carga (k6)
+
+# - En cada push a main: prueba de humo (1 usuario) contra un backend levantado en el runner.
+# - Manual: carga o estrés contra un entorno de pruebas (F-61). No apuntar a producción sin avisar.
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", "loadtest/**", ".github/workflows/loadtest.yml"]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL base de la API (termina en /api/v1). Vacío = backend local del runner"
+        required: false
+        default: ""
+      profile:
+        description: "Perfil"
+        type: choice
+        options: [smoke, load, stress]
+        default: load
+
+permissions:
+  contents: read
+
+jobs:
+  k6:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      SECRET_KEY: k6-only-secret-key-not-used-anywhere-else-0123456789abcdef
+      ALLOWED_HOSTS: 127.0.0.1,localhost
+      CORS_ALLOWED_ORIGINS: https://ejemplo.cl
+      SECURE_SSL_REDIRECT: "false"
+      DATABASE_URL: postgres://wexp:wexp-ci-password@localhost:5432/wexp_load
+      THROTTLE_RATE_ANON: 100000/min
+      THROTTLE_RATE_USER: 100000/min
+      THROTTLE_RATE_LOGIN: 100000/min
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: wexp_load
+          POSTGRES_USER: wexp
+          POSTGRES_PASSWORD: wexp-ci-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wexp -d wexp_load"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Backend local (solo si no se indicó otra URL)
+        if: ${{ inputs.base_url == '' }}
+        run: |
+          pip install -r backend/requirements.txt
+          cd backend
+          python manage.py migrate --noinput
+          python manage.py seed_demo
+          nohup gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3 > /tmp/gunicorn.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/api/v1/health/ && break; sleep 2; done
+      - name: k6
+        run: |
+          k6 run \
+            -e BASE_URL="${{ inputs.base_url || 'http://127.0.0.1:8000/api/v1' }}" \
+            -e PROFILE="${{ inputs.profile || 'smoke' }}" \
+            --summary-export=k6-summary.json loadtest/wexperiencias.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-summary
+          path: k6-summary.json
+          if-no-files-found: ignore
