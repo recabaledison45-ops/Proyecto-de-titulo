@@ -64,11 +64,11 @@ la estimación de costos (≈ US$ 22–25/mes; verificar precios vigentes) y cua
 
 | ID | Entregable | Estado | Evidencia en el repositorio | Pendiente |
 |---|---|---|---|---|
-| F-20 | CI/CD con GitHub Actions | **Hecho** | `.github/workflows/ci.yml`, `deploy.yml`, `dependabot.yml` | Ver la primera corrida en verde en GitHub |
+| F-20 | CI/CD con GitHub Actions | **Hecho** (CI en verde en GitHub: backend/PostgreSQL, frontend, E2E, imágenes Docker) | `.github/workflows/ci.yml`, `deploy.yml`, `dependabot.yml` | `deploy.yml` se probará en el primer despliegue real a AWS |
 | F-21 | Despliegue completo: Nginx, TLS, respaldos, monitoreo | **Preparado y validado estáticamente** | `deploy/`, `infra/aws/`, [DESPLIEGUE-AWS.md](DESPLIEGUE-AWS.md) | **Desplegar en la cuenta AWS** y probar respaldo/restauración (no hay Docker ni AWS en el entorno de desarrollo) |
 | F-60 | Pruebas E2E con Playwright | **Hecho** (26/26 verdes) | `e2e/` | — |
 | F-61 | Pruebas de carga con k6 | **Hecho** (script + umbrales + corrida local) | `loadtest/`, [PRUEBAS-CARGA.md](PRUEBAS-CARGA.md) | Repetir `load` y `stress` contra AWS y anotar resultados |
-| F-62 | pip-audit, npm audit y OWASP ZAP | **Auditorías hechas; ZAP preparado** | [SEGURIDAD.md](SEGURIDAD.md), `security.yml` | **Primera ejecución de ZAP** y registrar resultados |
+| F-62 | pip-audit, npm audit y OWASP ZAP | **Auditorías hechas; ZAP de la API ejecutado sin fallas** | [SEGURIDAD.md](SEGURIDAD.md), `security.yml` | Clasificar los avisos del informe de ZAP y escanear el sitio ya desplegado (`ZAP_TARGET_URL`) |
 | F-63 | Accesibilidad y SEO básico | **Hecho** (automatizado) | [ACCESIBILIDAD-SEO.md](ACCESIBILIDAD-SEO.md), `e2e/tests/a11y.spec.js`, `seo.spec.js` | Revisión manual (lista incluida) y Lighthouse en producción; imagen `og:image` |
 | F-69 | Proveedor de teselas del mapa | **Decidido** | [DECISION-TESELAS.md](DECISION-TESELAS.md), `mapConfig.js` | Crear la cuenta/clave de MapTiler restringida por dominio |
 | F-65 | Manual de usuario y runbooks | **Hecho** | [MANUAL-DE-USUARIO.md](MANUAL-DE-USUARIO.md), [RUNBOOKS.md](RUNBOOKS.md) | Completar la tabla de contactos de los runbooks |

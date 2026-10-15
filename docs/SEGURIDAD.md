@@ -37,9 +37,10 @@ marca como fallido con *fallas* (1) o errores de ejecución; los *avisos* se rev
 (`zap-api-report`, 30 días). Cada aviso se clasifica: corregir, o aceptar con justificación por escrito en la tabla de abajo (y entonces
 se agrega al archivo de reglas de ZAP).
 
-**Estado.** El workflow está escrito y validado sintácticamente (`actionlint`), pero **todavía no se ejecutó**: requiere Docker y
-GitHub Actions (el entorno donde se desarrolló no tiene demonio Docker). **Primera ejecución pendiente:** *Actions → Seguridad → Run workflow*;
-registrar aquí los resultados antes de la entrega.
+**Estado.** El job `zap-api` se ejecutó en GitHub Actions el 14-oct-2026 (commit `2818b4a`) y **terminó sin fallas** (código de salida 0 o 2; el
+resumen por alerta queda en el artefacto `zap-api-report`, que se descarga desde la página de la ejecución: *Actions → Seguridad → ejecución → Artifacts*).
+**Pendiente:** abrir ese informe, clasificar cada aviso y completar la tabla (no se pudo leer el informe desde el entorno de desarrollo). El job
+`zap-baseline` (sitio desplegado) está omitido hasta definir la variable `ZAP_TARGET_URL`.
 
 | Fecha | Objetivo | Fallas | Avisos | Decisión sobre cada aviso |
 |---|---|---|---|---|

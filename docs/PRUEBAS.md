@@ -14,7 +14,7 @@ Todo se ejecuta **automáticamente en GitHub Actions** (`.github/workflows/ci.ym
 | · SEO básico | | 4 | OK |
 | Carga | k6 | 3 perfiles (smoke · load · stress) | `load` 50 usuarios: ver [PRUEBAS-CARGA.md](PRUEBAS-CARGA.md) |
 | Seguridad de dependencias | pip-audit · npm audit | backend · frontend · e2e | 0 vulnerabilidades tras la corrección (ver [SEGURIDAD.md](SEGURIDAD.md)) |
-| Seguridad dinámica | OWASP ZAP (API scan) | semanal y manual | Workflow listo; ver [SEGURIDAD.md](SEGURIDAD.md) |
+| Seguridad dinámica | OWASP ZAP (API scan) | semanal y manual | Ejecutado en GitHub sin fallas; ver [SEGURIDAD.md](SEGURIDAD.md) |
 
 **Total automatizado: 93 pruebas** (67 + 26) además de las verificaciones de CI (migraciones, `check --deploy`, esquema OpenAPI,
 lint, build, imágenes Docker y configuración de Nginx).
@@ -56,6 +56,10 @@ En Windows (PowerShell): `$env:E2E_PYTHON="..\backend\.venv\Scripts\python.exe";
 
 ### Carga
 Ver [PRUEBAS-CARGA.md](PRUEBAS-CARGA.md).
+
+**Primera ejecución en GitHub Actions (14-oct-2026):** backend con PostgreSQL (67 pruebas), frontend, E2E (26) e imágenes Docker en verde.
+El CI además detectó un defecto real de despliegue: `deploy/.env.prod.example` estaba ignorado por `.gitignore` y no se había subido (el arranque de
+la instancia AWS habría fallado); corregido.
 
 ## Hallazgos que corrigieron las pruebas
 1. **Accesibilidad** (axe, gravedad *serious*): lista de definición `<dl>` con estructura inválida en la ficha de la oferta;
