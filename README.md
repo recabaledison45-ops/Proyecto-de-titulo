@@ -1,15 +1,22 @@
 # W Experiencias · MVP de reservas turísticas
 
+[![CI](https://github.com/recabaledison45-ops/Proyecto-de-titulo/actions/workflows/ci.yml/badge.svg)](https://github.com/recabaledison45-ops/Proyecto-de-titulo/actions/workflows/ci.yml)
+[![Seguridad](https://github.com/recabaledison45-ops/Proyecto-de-titulo/actions/workflows/security.yml/badge.svg)](https://github.com/recabaledison45-ops/Proyecto-de-titulo/actions/workflows/security.yml)
+
 Marketplace bilateral para turismo regenerativo y de bienestar (Región del Maule): **alojamientos, paquetes turísticos,
 guías locales y actividades/tours** bajo un mismo motor de búsqueda, reservas, pagos y reseñas.
 
 - **Backend:** Django 5.2 + Django REST Framework, monolito modular, API 100 % JSON, auth JWT (`simplejwt`).
 - **Frontend:** React 19 + Vite + React Router, Axios con renovación automática del token, Tailwind CSS v4 + componentes
-  estilo shadcn/ui, mapa con Leaflet (sin API key).
+  estilo shadcn/ui, mapa con Leaflet (sin clave en desarrollo; MapTiler en producción).
 - **Base de datos:** SQLite por defecto; PostgreSQL con variables de entorno.
+- **Contenedores y producción:** Docker (imagen multi-stage del backend y de Nginx + frontend), Docker Compose con PostgreSQL,
+  Nginx con TLS (Let's Encrypt), respaldos a S3 y monitoreo con CloudWatch en **AWS (EC2)**.
+- **Calidad:** GitHub Actions (CI/CD), 67 pruebas del backend, 26 pruebas E2E con Playwright (incluye accesibilidad con axe),
+  carga con k6 y auditorías de seguridad (pip-audit, npm audit, OWASP ZAP).
 
 ```
-backend/
+backend/            # Django + DRF (ver detalle abajo)
 ├── manage.py · requirements.txt · .env.example
 ├── Dockerfile · docker-compose.yml · entrypoint.sh
 ├── config/settings/{base,local,production}.py · urls.py · wsgi.py · asgi.py
@@ -21,10 +28,31 @@ backend/
 │   └── reviews/    # reseñas ciegas cruzadas
 └── shared/         # TimeStampedModel, permisos, excepciones, correos, CSV, pruebas base
 frontend/           # SPA (src/api, components, components/ui, context, hooks, lib, pages)
+e2e/                # pruebas extremo a extremo (Playwright) + accesibilidad (axe) + SEO
+loadtest/           # pruebas de carga (k6)
+deploy/             # producción: docker-compose.prod.yml, Nginx (TLS), scripts de despliegue/respaldo/monitoreo
+infra/aws/          # CloudFormation: EC2, IP elástica, S3, alarmas, rol de despliegue (OIDC)
+docs/               # guías, runbooks, manual de usuario, plan UAT, decisiones
+.github/workflows/  # ci.yml · security.yml · loadtest.yml · deploy.yml
+render.yaml · DESPLIEGUE.md   # entorno de demostración gratuito (Render + Vercel)
 ```
 
 Cada app separa `models.py`, `serializers.py`, `services.py` (escritura y reglas de negocio), `selectors.py` (lecturas),
 `views.py` (delgadas), `urls.py` y `admin.py`.
+
+## Documentación
+| Documento | Contenido |
+|---|---|
+| [docs/DESPLIEGUE-AWS.md](docs/DESPLIEGUE-AWS.md) | Producción en AWS: Nginx, TLS, respaldos, monitoreo, despliegue automático |
+| [docs/RUNBOOKS.md](docs/RUNBOOKS.md) | Qué hacer ante caídas, restauración, certificados, disco lleno, rotación de claves |
+| [docs/MANUAL-DE-USUARIO.md](docs/MANUAL-DE-USUARIO.md) | Manual para huéspedes, anfitriones y administración |
+| [docs/PRUEBAS.md](docs/PRUEBAS.md) · [docs/PRUEBAS-CARGA.md](docs/PRUEBAS-CARGA.md) | Estrategia, conteo y resultados de pruebas; carga con k6 |
+| [docs/SEGURIDAD.md](docs/SEGURIDAD.md) | pip-audit, npm audit, OWASP ZAP y controles implementados |
+| [docs/ACCESIBILIDAD-SEO.md](docs/ACCESIBILIDAD-SEO.md) | WCAG 2.1 AA, lista de revisión manual y SEO |
+| [docs/DECISION-TESELAS.md](docs/DECISION-TESELAS.md) | Proveedor del mapa y cómo configurarlo |
+| [docs/UAT.md](docs/UAT.md) | Plan, casos y acta de aceptación con la clienta |
+| [docs/AJUSTES-INFORME.md](docs/AJUSTES-INFORME.md) | Cambios a reflejar en el informe del proyecto de título |
+| [DESPLIEGUE.md](DESPLIEGUE.md) | Entorno de demostración gratuito (Render + Vercel) |
 
 ## Cómo correrlo (dos terminales)
 
@@ -112,34 +140,43 @@ curl "$B/listings/?category=activity"
 ```
 **Postman:** *Import → Link* con `http://127.0.0.1:8000/api/schema/` y autorización *Bearer Token*.
 
-### 4. Desplegar en un PaaS (Railway / Render) o VPS
-- **Railway / Render:** apunte el servicio a `backend/` (usa el `Dockerfile`), agregue un PostgreSQL y defina
-  `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` y `DATABASE_URL` (la entrega la plataforma).
-  La plataforma inyecta `PORT`; su proxy TLS envía `X-Forwarded-Proto`, ya contemplado. Para las imágenes subidas monte un
-  volumen en `/app/media` y use `SERVE_MEDIA=true`.
-- **VPS:** `docker compose up -d --build` detrás de Nginx/Caddy con TLS (proxy a `127.0.0.1:8000` con la cabecera
-  `X-Forwarded-Proto`). Con Nginx puede servir `/media/` desde el volumen y dejar `SERVE_MEDIA=false`.
+### 4. Desplegar
+- **Producción: AWS (EC2 + Docker + Nginx + TLS)** → guía completa en [docs/DESPLIEGUE-AWS.md](docs/DESPLIEGUE-AWS.md). Un solo comando de
+  CloudFormation crea el servidor, la IP, el bucket de respaldos y las alarmas; `deploy/docker-compose.prod.yml` levanta Nginx,
+  Django y PostgreSQL. Los despliegues posteriores salen de GitHub Actions (`deploy.yml`) al publicar una etiqueta `v*`.
+- **Demostración gratuita: Render (backend) + Vercel (frontend)** → [DESPLIEGUE.md](DESPLIEGUE.md). Útil para mostrar el proyecto; el plan
+  gratuito duerme el servidor, la base caduca a los 30 días y las fotos subidas no persisten.
+- **Otro PaaS (Railway) o VPS propio:** el `backend/Dockerfile` funciona en cualquiera; `deploy/` sirve tal cual en cualquier VPS Linux
+  con Docker (omita `infra/aws/`).
 
 ### Pruebas
 ```bash
 cd backend
-python manage.py test               # 67 pruebas (1 se omite sin PostgreSQL)
-coverage run --source=apps manage.py test && coverage report
+python manage.py test               # 67 pruebas (1 se omite sin PostgreSQL: la de concurrencia)
+coverage run --source=apps,shared manage.py test && coverage report     # cobertura 96 %
+
+cd ../e2e && npm ci && npx playwright install chromium
+npx playwright test                 # 26 pruebas E2E (navegación, reservas, móvil, accesibilidad axe, SEO)
+
+k6 run -e PROFILE=smoke loadtest/wexperiencias.js     # carga (ver docs/PRUEBAS-CARGA.md)
 ```
+Todo esto corre solo en **GitHub Actions** en cada push y Pull Request (`.github/workflows/ci.yml`); la seguridad
+(`pip-audit`, `npm audit`, OWASP ZAP) en `security.yml`. Detalle, cifras y desglose por módulo: [docs/PRUEBAS.md](docs/PRUEBAS.md).
+
 Reglas de negocio pedidas: 1) solape → 409 · 2) reservas consecutivas permitidas · 3) cancelar libera fechas ·
 4) el anfitrión no reserva lo suyo · 5) respeta `max_guests` · 6) flujo completo por API
 (`apps/bookings/tests.py` y `apps/bookings/test_flow.py`).
 
 **Concurrencia real:** `select_for_update()` solo bloquea en PostgreSQL. La prueba con hilos
-(`apps/bookings/test_concurrency.py`) se omite en SQLite; para correrla:
+(`apps/bookings/test_concurrency.py`) se omite en SQLite y **sí corre en el CI** (que usa PostgreSQL). Para correrla en su equipo:
 ```bash
-DB_ENGINE=postgres DB_NAME=wexp DB_USER=postgres DB_PASSWORD=... DB_HOST=localhost python manage.py test apps.bookings.test_concurrency
+DATABASE_URL=postgres://postgres:clave@localhost:5432/wexp python manage.py test apps.bookings.test_concurrency
 ```
 
 ## Variables de entorno (backend, ver `backend/.env.example`)
 `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `DATABASE_URL` (o `DB_ENGINE` + `DB_*`), `ENABLE_API_DOCS`, `SERVE_MEDIA`,
 `PLATFORM_FEE_PERCENT` (10), `BOOKING_PENDING_HOURS` (48), `PAYMENT_GATEWAY` (`bank_transfer`|`simulated`),
-`REVIEW_REQUIRE_CHECKOUT_PASSED`, `EMAIL_*`, `MEDIA_ROOT`. Producción: `DJANGO_SETTINGS_MODULE=config.settings.production`
+`REVIEW_REQUIRE_CHECKOUT_PASSED`, `EMAIL_*`, `MEDIA_ROOT`, `NUM_PROXIES` (1 detrás de Nginx), `THROTTLE_RATE_*` (solo para pruebas de carga). Producción: `DJANGO_SETTINGS_MODULE=config.settings.production`
 (exige `SECRET_KEY` y `ALLOWED_HOSTS`, activa HTTPS/HSTS y cookies seguras).
 
 ## API (`/api/v1/`) · JSON salvo CSV
@@ -175,8 +212,8 @@ Auth: `Authorization: Bearer <access>` (access 30 min, refresh 7 días con rotac
 - **Correos** al crear, confirmar y cancelar; un fallo de envío nunca rompe la reserva.
 
 ## Simplificaciones del MVP (documentadas)
-- Sin PostGIS: bounding box simple con lat/lng. Sin Mapbox/Google Maps: Leaflet con teselas CARTO/OSM
-  (**revisar sus términos de uso antes de producción**; se cambian con `VITE_TILE_URL`).
+- Sin PostGIS: bounding box simple con lat/lng. Sin Mapbox/Google Maps: Leaflet. Teselas: OpenStreetMap solo en desarrollo;
+  **producción con MapTiler** (decisión y configuración en [docs/DECISION-TESELAS.md](docs/DECISION-TESELAS.md), variable `VITE_TILE_URL`).
 - Sin Stripe/Webpay: pasarela simulada y transferencia informada con la misma interfaz.
 - Imagen de portada opcional (volumen local `MEDIA_ROOT`) o foto por URL.
 - API lista (JSON + JWT) para una futura app Android con React Native + Expo; no se construye.
@@ -192,4 +229,7 @@ Auth: `Authorization: Bearer <access>` (access 30 min, refresh 7 días con rotac
 - **Throttling** usa la caché de Django (en memoria por proceso); con varios workers de Gunicorn conviene Redis o caché en base de datos.
 - **Deuda técnica conocida:** `listings` consulta a `bookings` para calcular disponibilidad (un único selector, `bookings.selectors`).
 - Las fotos de los datos demo vienen de `picsum.photos` (requieren internet).
-- Fuera del alcance de este paquete (se arma aparte): Docker, CI/CD, despliegue en AWS, E2E/carga/seguridad e informe.
+- **Pendiente de ejecutar fuera del repositorio** (el material ya está preparado): primera corrida de OWASP ZAP en GitHub Actions,
+  prueba de carga contra el entorno AWS real, despliegue de la plantilla `infra/aws/` en la cuenta de AWS, y la UAT con la clienta
+  ([docs/UAT.md](docs/UAT.md)). Docker, CI/CD, E2E, carga, auditorías, accesibilidad/SEO, manual y runbooks **ya están incluidos**.
+- Sin recuperación de contraseña por correo (la restablece un administrador) ni renderizado en servidor para vistas previas por oferta.

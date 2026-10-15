@@ -1,0 +1,417 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  W Experiencias en AWS: una instancia EC2 (Docker + Nginx + PostgreSQL) con IP elastica, bucket S3 de respaldos,
+  alarmas de CloudWatch con aviso por correo (SNS) y un rol para desplegar desde GitHub Actions sin claves ni SSH.
+
+Parameters:
+  Domain:
+    Type: String
+    Description: Dominio publico del sitio, sin https:// (ej. wexperiencias.cl). Su registro A debe apuntar a la IP elastica.
+    AllowedPattern: ^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$
+  LetsEncryptEmail:
+    Type: String
+    Description: Correo para avisos de vencimiento de certificados TLS
+  AlertEmail:
+    Type: String
+    Description: Correo que recibe las alarmas (confirmar la suscripcion que llega por correo)
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subred PUBLICA (con ruta a un Internet Gateway) de esa VPC
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.small, t3.medium, t3.large, t3a.small, t3a.medium]
+    Description: t3.small (2 GB) alcanza para el MVP; el frontend se compila en la propia instancia.
+  VolumeSizeGiB:
+    Type: Number
+    Default: 30
+    MinValue: 20
+    MaxValue: 500
+  GitHubRepo:
+    Type: String
+    Default: recabaledison45-ops/Proyecto-de-titulo
+    Description: Repositorio (dueno/nombre). Debe ser publico, o clonar manualmente si es privado.
+  GitRef:
+    Type: String
+    Default: main
+    Description: Rama o etiqueta inicial a desplegar
+  CreateGitHubOidcProvider:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Poner false si su cuenta AWS ya tiene el proveedor OIDC de token.actions.githubusercontent.com
+
+Conditions:
+  CreateOidc: !Equals [!Ref CreateGitHubOidcProvider, "true"]
+
+Resources:
+  # ---------------------------------------------------------------- Respaldos (S3)
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration: { Status: Enabled }
+      LifecycleConfiguration:
+        Rules:
+          - Id: expirar-respaldos-antiguos
+            Status: Enabled
+            ExpirationInDays: 90
+            NoncurrentVersionExpiration: { NoncurrentDays: 30 }
+            AbortIncompleteMultipartUpload: { DaysAfterInitiation: 7 }
+      Tags:
+        - { Key: Project, Value: wexperiencias }
+
+  BackupBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BackupBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: SoloTLS
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt BackupBucket.Arn
+              - !Sub "${BackupBucket.Arn}/*"
+            Condition:
+              Bool: { "aws:SecureTransport": "false" }
+
+  # ---------------------------------------------------------------- Identidad de la instancia
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore   # acceso por Session Manager y despliegues por SSM (sin SSH)
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Policies:
+        - PolicyName: respaldos-y-metricas
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: RespaldosEnS3
+                Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:ListBucket]
+                Resource:
+                  - !GetAtt BackupBucket.Arn
+                  - !Sub "${BackupBucket.Arn}/*"
+              - Sid: MetricasPropias
+                Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals: { "cloudwatch:namespace": WExperiencias }
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  # ---------------------------------------------------------------- Red
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: W Experiencias - solo HTTP/HTTPS (la administracion va por SSM, sin SSH)
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0, Description: HTTP (ACME y redireccion) }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTPS }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: "::/0", Description: HTTP IPv6 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIpv6: "::/0", Description: HTTPS IPv6 }
+      Tags:
+        - { Key: Name, Value: wexperiencias-web }
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - { Key: Name, Value: wexperiencias }
+
+  # ---------------------------------------------------------------- Servidor
+  Server:
+    Type: AWS::EC2::Instance
+    DeletionPolicy: Delete
+    Properties:
+      ImageId: "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds: [!Ref SecurityGroup]
+      IamInstanceProfile: !Ref InstanceProfile
+      Monitoring: true
+      DisableApiTermination: true
+      MetadataOptions:
+        HttpTokens: required          # IMDSv2
+        HttpPutResponseHopLimit: 1    # los contenedores no pueden leer las credenciales de la instancia
+        HttpEndpoint: enabled
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref VolumeSizeGiB
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - { Key: Name, Value: wexperiencias }
+        - { Key: Project, Value: wexperiencias }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          exec > >(tee /var/log/wexperiencias-bootstrap.log) 2>&1
+
+          dnf -y install docker git cronie jq amazon-cloudwatch-agent
+          systemctl enable --now docker crond
+
+          # Docker Compose v2 (plugin) verificado con su suma SHA-256
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          cd /usr/local/lib/docker/cli-plugins
+          curl -fsSL -o docker-compose https://github.com/docker/compose/releases/download/v2.40.3/docker-compose-linux-x86_64
+          curl -fsSL -o docker-compose.sha256 https://github.com/docker/compose/releases/download/v2.40.3/docker-compose-linux-x86_64.sha256
+          echo "$(cut -d' ' -f1 docker-compose.sha256)  docker-compose" | sha256sum -c -
+          rm docker-compose.sha256
+          chmod +x docker-compose
+          docker compose version
+
+          # Memoria de respaldo (la compilacion del frontend consume ~1 GB)
+          fallocate -l 2G /swapfile
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+          # Codigo
+          git clone --branch ${GitRef} https://github.com/${GitHubRepo}.git /opt/wexperiencias
+          git config --system --add safe.directory /opt/wexperiencias
+          cd /opt/wexperiencias/deploy
+
+          # Variables de produccion con claves aleatorias (quedan solo en este servidor, permisos 600)
+          cp .env.prod.example .env.prod
+          SECRET_KEY_VALUE=$(openssl rand -base64 96 | tr -d '\n=+/' | cut -c1-64)
+          DB_PASSWORD_VALUE=$(openssl rand -base64 48 | tr -d '\n=+/' | cut -c1-40)
+          sed -i "s|^DOMAIN=.*|DOMAIN=${Domain}|" .env.prod
+          sed -i "s|^LETSENCRYPT_EMAIL=.*|LETSENCRYPT_EMAIL=${LetsEncryptEmail}|" .env.prod
+          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$SECRET_KEY_VALUE|" .env.prod
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$DB_PASSWORD_VALUE|" .env.prod
+          sed -i "s|^BACKUP_S3_BUCKET=.*|BACKUP_S3_BUCKET=${BackupBucket}|" .env.prod
+          sed -i "s|^AWS_DEFAULT_REGION=.*|AWS_DEFAULT_REGION=${AWS::Region}|" .env.prod
+          chmod 600 .env.prod
+          chmod +x scripts/*.sh
+
+          # Monitoreo: memoria, disco y registros en CloudWatch
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s \
+            -c file:/opt/wexperiencias/deploy/monitoring/cloudwatch-agent.json
+
+          echo "Preparacion terminada. Siguiente paso: apuntar el DNS a la IP elastica y ejecutar scripts/init-letsencrypt.sh"
+
+  EipAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref Server
+
+  # ---------------------------------------------------------------- Alarmas
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: W Experiencias - alertas
+      Subscription:
+        - { Protocol: email, Endpoint: !Ref AlertEmail }
+
+  AlarmAppHealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-app-caida
+      AlarmDescription: La API no responde por HTTPS, falta un contenedor o el certificado vence pronto (scripts/healthcheck.sh, cada 5 min).
+      Namespace: WExperiencias
+      MetricName: AppHealthy
+      Dimensions:
+        - { Name: Host, Value: !Ref Domain }
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching   # si el servidor muere deja de publicar: tambien alarma
+      AlarmActions: [!Ref AlertTopic]
+      OKActions: [!Ref AlertTopic]
+
+  AlarmBackup:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-sin-respaldo
+      AlarmDescription: No hubo un respaldo exitoso en las ultimas 30 horas.
+      Namespace: WExperiencias
+      MetricName: BackupSuccess
+      Dimensions:
+        - { Name: Host, Value: !Ref Domain }
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 30
+      DatapointsToAlarm: 30
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions: [!Ref AlertTopic]
+
+  AlarmStatusCheck:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-fallo-de-instancia
+      AlarmDescription: Fallo de los chequeos de estado de EC2. Si es del sistema, AWS intenta recuperar la instancia.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Server }
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+        - !Sub "arn:aws:automate:${AWS::Region}:ec2:recover"
+
+  AlarmInstanceStatus:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-fallo-del-sistema-operativo
+      AlarmDescription: Falla el chequeo de la propia instancia (SO sin respuesta).
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_Instance
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Server }
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 5
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  AlarmCpu:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-cpu-alta
+      AlarmDescription: CPU sobre 85 % por 15 minutos. Evaluar un tipo de instancia mayor o revisar la carga.
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Server }
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 85
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  AlarmMemory:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-memoria-alta
+      AlarmDescription: Memoria sobre 90 % por 15 minutos (CloudWatch agent).
+      Namespace: CWAgent
+      MetricName: mem_used_percent
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Server }
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 90
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  AlarmDisk:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wexperiencias-disco-lleno
+      AlarmDescription: Disco sobre 80 %. Ver docs/RUNBOOKS.md - Disco lleno.
+      Namespace: CWAgent
+      MetricName: disk_used_percent
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Server }
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  # ---------------------------------------------------------------- Despliegue desde GitHub Actions (OIDC, sin claves)
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateOidc
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Rol que asume GitHub Actions (entorno "production") para ejecutar el despliegue por SSM.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateOidc
+                - !GetAtt GitHubOidcProvider.Arn
+                - !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": sts.amazonaws.com
+                "token.actions.githubusercontent.com:sub": !Sub "repo:${GitHubRepo}:environment:production"
+      Policies:
+        - PolicyName: desplegar-por-ssm
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}::document/AWS-RunShellScript"
+                  - !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${Server}"
+              - Effect: Allow
+                Action: [ssm:GetCommandInvocation, ssm:ListCommandInvocations]
+                Resource: "*"
+
+Outputs:
+  ElasticIP:
+    Description: Cree en su DNS un registro A del dominio hacia esta IP
+    Value: !Ref ElasticIp
+  InstanceId:
+    Value: !Ref Server
+  OpenShell:
+    Description: Terminal en el servidor (sin SSH)
+    Value: !Sub "aws ssm start-session --target ${Server} --region ${AWS::Region}"
+  BackupBucketName:
+    Value: !Ref BackupBucket
+  DeployRoleArn:
+    Description: Guardar como secreto AWS_DEPLOY_ROLE_ARN en el entorno "production" de GitHub
+    Value: !GetAtt DeployRole.Arn
+  SiteUrl:
+    Value: !Sub "https://${Domain}"

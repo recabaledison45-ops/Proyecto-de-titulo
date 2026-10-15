@@ -1,0 +1,98 @@
+# ---------------------------------------------------------------------------
+# Puerto 80: desafío ACME de Let's Encrypt y redirección a HTTPS.
+# ---------------------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location = /nginx-health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Puerto 443: frontend (SPA) + API + admin + archivos subidos.
+# ---------------------------------------------------------------------------
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    client_max_body_size 6m;   # fotos de ofertas <= 2 MB; Django limita a 5 MB
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # --- API (Django) ---
+    location /api/ {
+        limit_req zone=api burst=60 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+
+    # Login y registro: límite estricto por IP (Django además aplica 5/min)
+    location ~ ^/api/v1/auth/(login|register)/$ {
+        limit_req zone=auth burst=5 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+
+    # --- Administración de Django y sus estáticos (WhiteNoise) ---
+    location /admin/ {
+        limit_req zone=api burst=20 nodelay;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+    location /static/ {
+        expires 30d;
+        include /etc/nginx/snippets/proxy.conf;
+    }
+
+    # --- Imágenes subidas por los anfitriones (volumen compartido, solo lectura) ---
+    location /media/ {
+        alias /var/www/media/;
+        expires 7d;
+        try_files $uri =404;
+    }
+
+    # --- Frontend ---
+    location /assets/ {
+        expires 1y;               # archivos con hash en el nombre: inmutables
+        try_files $uri =404;
+    }
+    location = /index.html {
+        expires -1;               # siempre revalidar: así llegan los despliegues nuevos
+    }
+    location = /robots.txt  { expires 1d; }
+    location = /sitemap.xml { expires 1d; }
+    location = /favicon.svg { expires 7d; }
+
+    location = /nginx-health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        try_files $uri /index.html;   # rutas de la SPA (React Router)
+    }
+}

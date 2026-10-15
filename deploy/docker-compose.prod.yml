@@ -1,0 +1,104 @@
+# =============================================================================
+# Producción en una instancia AWS (EC2): Nginx (TLS + frontend + proxy) → Django/gunicorn → PostgreSQL.
+#
+#   cp .env.prod.example .env.prod   # (en AWS lo crea solo el arranque de la instancia, ver infra/aws)
+#   ./scripts/init-letsencrypt.sh    # primera vez: pide el certificado TLS
+#   ./scripts/deploy.sh              # actualizaciones
+#
+# Solo Nginx publica puertos (80 y 443). La base de datos y el backend no son accesibles desde fuera.
+# =============================================================================
+name: wexperiencias
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wexperiencias}
+      POSTGRES_USER: ${POSTGRES_USER:-wexp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en deploy/.env.prod}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+
+  web:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DATABASE_URL: postgres://${POSTGRES_USER:-wexp}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-wexperiencias}
+      # localhost/127.0.0.1: lo usa el HEALTHCHECK interno del contenedor (no es accesible desde fuera)
+      ALLOWED_HOSTS: ${DOMAIN:?Defina DOMAIN en deploy/.env.prod},localhost,127.0.0.1
+      CORS_ALLOWED_ORIGINS: https://${DOMAIN}
+      CSRF_TRUSTED_ORIGINS: https://${DOMAIN}
+      FRONTEND_URL: https://${DOMAIN}
+      NUM_PROXIES: "1"          # Nginx delante: el límite de peticiones usa la IP real del cliente
+      SECURE_SSL_REDIRECT: "true"
+      SERVE_MEDIA: "false"      # /media/ lo sirve Nginx
+      ENABLE_API_DOCS: ${ENABLE_API_DOCS:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    volumes:
+      - media_data:/app/media
+    logging: *logging
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: deploy/nginx/Dockerfile
+      args:
+        SITE_URL: https://${DOMAIN}
+        VITE_TILE_URL: ${VITE_TILE_URL:-}
+        VITE_TILE_ATTRIBUTION: ${VITE_TILE_ATTRIBUTION:-}
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - media_data:/var/www/media:ro
+    # Recarga Nginx cada 6 h para tomar los certificados renovados.
+    command: >-
+      /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & exec nginx -g "daemon off;"'
+    logging: *logging
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    # Renovación automática (solo renueva si faltan < 30 días).
+    entrypoint: >-
+      /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'
+    logging: *logging
+
+volumes:
+  postgres_data:
+  media_data:
+  certbot_conf:
+  certbot_www:
