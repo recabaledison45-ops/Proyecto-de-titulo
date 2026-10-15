@@ -64,7 +64,7 @@ jobs:
           coverage xml
       - name: Esquema OpenAPI válido
         run: python manage.py spectacular --file /tmp/schema.yml --validate --fail-on-warn
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage
@@ -95,7 +95,7 @@ jobs:
         run: |
           test -s dist/robots.txt && test -s dist/sitemap.xml
           grep -q "Sitemap: https://wexperiencias.example.cl/sitemap.xml" dist/robots.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist
@@ -132,7 +132,7 @@ jobs:
       - name: Pruebas E2E (levanta backend y frontend solos)
         run: npx playwright test
         working-directory: e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
