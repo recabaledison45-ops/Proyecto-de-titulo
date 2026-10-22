@@ -19,7 +19,7 @@ drf-spectacular==0.30.0
 
 # --- Base de datos y archivos ---
 psycopg[binary]==3.3.6
-pillow==12.3.0
+pillow==13.0.0
 
 # --- Servidor de producción ---
 gunicorn==26.2.0
