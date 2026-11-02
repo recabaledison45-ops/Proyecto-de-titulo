@@ -47,7 +47,7 @@ jobs:
           --health-cmd "pg_isready -U wexp -d wexp_load"
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: grafana/setup-k6-action@v1
       - name: Backend local (solo si no se indicó otra URL)
         if: ${{ inputs.base_url == '' }}
