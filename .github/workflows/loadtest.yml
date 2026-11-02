@@ -64,7 +64,7 @@ jobs:
             -e BASE_URL="${{ inputs.base_url || 'http://127.0.0.1:8000/api/v1' }}" \
             -e PROFILE="${{ inputs.profile || 'smoke' }}" \
             --summary-export=k6-summary.json loadtest/wexperiencias.js
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: k6-summary
