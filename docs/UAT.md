@@ -47,6 +47,8 @@ Prioridad: **C** crítico · **I** importante · **D** deseable. Columna *Result
 | UAT-07 | C | Reservar | Elegir fechas disponibles y personas → Reservar | Reserva *Pendiente* en *Mis reservas*; el total coincide con lo mostrado | | |
 | UAT-08 | C | Fechas ocupadas | Intentar reservar fechas ya tomadas (por otra reserva) | No permite elegirlas o informa que no están disponibles | | |
 | UAT-09 | C | Pagar por transferencia | *Pagar* → ver datos → *Ya transferí* | Se informa el pago; el estado cambia a "pago informado" | | |
+| UAT-09b | C | Pagar con tarjeta | *Pagar* → *Pagar con tarjeta* → completar en Webpay (tarjeta de prueba en el ambiente de pruebas) | Vuelve al sitio con comprobante; reserva *Confirmada* sin intervención del anfitrión | | |
+| UAT-09c | I | Tarjeta rechazada o pago anulado | Repetir y anular en Webpay | Mensaje claro, sin cargo, se puede reintentar | | |
 | UAT-10 | I | Correos | Revisar el correo tras reservar y tras la confirmación | Llegan mensajes claros, en español y sin errores | | |
 | UAT-11 | I | Cancelar | Cancelar una reserva | Las fechas quedan libres; si había pago, figura como reembolsado | | |
 | UAT-12 | I | Reseñar | Con una reserva finalizada, enviar reseña | La reseña se envía; se publica cuando ambos reseñaron | | |

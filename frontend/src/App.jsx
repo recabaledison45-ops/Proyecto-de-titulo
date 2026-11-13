@@ -12,6 +12,7 @@ const ListingDetail = lazy(() => import('@/pages/ListingDetail'))
 const Login = lazy(() => import('@/pages/Login'))
 const Register = lazy(() => import('@/pages/Register'))
 const MyBookings = lazy(() => import('@/pages/MyBookings'))
+const PaymentResult = lazy(() => import('@/pages/PaymentResult'))
 const Account = lazy(() => import('@/pages/Account'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="bookings" element={<RequireAuth><MyBookings /></RequireAuth>} />
+          <Route path="payments/result" element={<RequireAuth><PaymentResult /></RequireAuth>} />
           <Route path="account" element={<RequireAuth role="host"><Account /></RequireAuth>} />
           <Route path="*" element={<NotFound />} />
         </Route>

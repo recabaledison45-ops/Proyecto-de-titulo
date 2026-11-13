@@ -12,7 +12,7 @@ guías locales y actividades/tours** bajo un mismo motor de búsqueda, reservas,
 - **Base de datos:** SQLite por defecto; PostgreSQL con variables de entorno.
 - **Contenedores y producción:** Docker (imagen multi-stage del backend y de Nginx + frontend), Docker Compose con PostgreSQL,
   Nginx con TLS (Let's Encrypt), respaldos a S3 y monitoreo con CloudWatch en **AWS (EC2)**.
-- **Calidad:** GitHub Actions (CI/CD), 67 pruebas del backend, 26 pruebas E2E con Playwright (incluye accesibilidad con axe),
+- **Calidad:** GitHub Actions (CI/CD), 91 pruebas del backend, 30 pruebas E2E con Playwright (incluye accesibilidad con axe y el pago con tarjeta),
   carga con k6 y auditorías de seguridad (pip-audit, npm audit, OWASP ZAP).
 
 ```
@@ -47,6 +47,7 @@ Cada app separa `models.py`, `serializers.py`, `services.py` (escritura y reglas
 | [docs/RUNBOOKS.md](docs/RUNBOOKS.md) | Qué hacer ante caídas, restauración, certificados, disco lleno, rotación de claves |
 | [docs/MANUAL-DE-USUARIO.md](docs/MANUAL-DE-USUARIO.md) | Manual para huéspedes, anfitriones y administración |
 | [docs/PRUEBAS.md](docs/PRUEBAS.md) · [docs/PRUEBAS-CARGA.md](docs/PRUEBAS-CARGA.md) | Estrategia, conteo y resultados de pruebas; carga con k6 |
+| [docs/PAGOS-WEBPAY.md](docs/PAGOS-WEBPAY.md) | Pago con tarjeta (Webpay Plus): cómo funciona, tarjetas de prueba y paso a producción |
 | [docs/SEGURIDAD.md](docs/SEGURIDAD.md) | pip-audit, npm audit, OWASP ZAP y controles implementados |
 | [docs/ACCESIBILIDAD-SEO.md](docs/ACCESIBILIDAD-SEO.md) | WCAG 2.1 AA, lista de revisión manual y SEO |
 | [docs/DECISION-TESELAS.md](docs/DECISION-TESELAS.md) | Proveedor del mapa y cómo configurarlo |
@@ -152,11 +153,11 @@ curl "$B/listings/?category=activity"
 ### Pruebas
 ```bash
 cd backend
-python manage.py test               # 67 pruebas (1 se omite sin PostgreSQL: la de concurrencia)
-coverage run --source=apps,shared manage.py test && coverage report     # cobertura 96 %
+python manage.py test               # 91 pruebas (1 se omite sin PostgreSQL: la de concurrencia)
+coverage run --source=apps,shared manage.py test && coverage report     # cobertura 95 %
 
 cd ../e2e && npm ci && npx playwright install chromium
-npx playwright test                 # 26 pruebas E2E (navegación, reservas, móvil, accesibilidad axe, SEO)
+npx playwright test                 # 30 pruebas E2E (navegación, reservas, pago con tarjeta, móvil, accesibilidad axe, SEO)
 
 k6 run -e PROFILE=smoke loadtest/wexperiencias.js     # carga (ver docs/PRUEBAS-CARGA.md)
 ```
@@ -205,7 +206,10 @@ Auth: `Authorization: Bearer <access>` (access 30 min, refresh 7 días con rotac
 - **Modo cupos (`shared`):** varias reservas por fecha hasta `max_guests`; el precio es por persona y día.
 - **Reservas pendientes** vencen a las 48 h (`python manage.py expire_pending_bookings`, para cron) y dejan de bloquear fechas.
   Si el huésped ya informó su pago, no vencen: decide el anfitrión.
-- **Pagos:** pasarela intercambiable (`PaymentGateway.charge/refund`). Por defecto `bank_transfer` (el huésped informa, el anfitrión
+- **Pago con tarjeta:** Webpay Plus de Transbank (débito, crédito, prepago): `POST /payments/webpay/` crea la transacción, el huésped
+  paga en el sitio de Transbank y `payments/webpay/return/` confirma el cargo, guarda el comprobante y confirma la reserva. Cancelar una
+  reserva pagada devuelve el dinero a la tarjeta. Variables `WEBPAY_*`.
+- **Otros pagos:** pasarela intercambiable (`PaymentGateway.charge/refund`). Por defecto `bank_transfer` (el huésped informa, el anfitrión
   confirma); `simulated` cobra al instante. Comisión 10 % y neto al anfitrión. Cancelar una reserva pagada la marca `refunded`
   mediante la señal `booking_cancelled` (`bookings` no importa `payments`).
 - **Reseñas ciegas:** se publican las dos a la vez cuando huésped y anfitrión reseñaron la reserva confirmada.
@@ -214,7 +218,8 @@ Auth: `Authorization: Bearer <access>` (access 30 min, refresh 7 días con rotac
 ## Simplificaciones del MVP (documentadas)
 - Sin PostGIS: bounding box simple con lat/lng. Sin Mapbox/Google Maps: Leaflet. Teselas: OpenStreetMap solo en desarrollo;
   **producción con MapTiler** (decisión y configuración en [docs/DECISION-TESELAS.md](docs/DECISION-TESELAS.md), variable `VITE_TILE_URL`).
-- Sin Stripe/Webpay: pasarela simulada y transferencia informada con la misma interfaz.
+- Pago con tarjeta por **Webpay Plus** en ambiente de integración (pruebas); producción requiere contrato con Transbank
+  ([docs/PAGOS-WEBPAY.md](docs/PAGOS-WEBPAY.md)). La liquidación a los anfitriones es manual. Sin Stripe.
 - Imagen de portada opcional (volumen local `MEDIA_ROOT`) o foto por URL.
 - API lista (JSON + JWT) para una futura app Android con React Native + Expo; no se construye.
 

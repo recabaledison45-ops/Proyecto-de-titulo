@@ -10,7 +10,8 @@ class PaymentInline(admin.StackedInline):
     model = Payment
     extra = 0
     can_delete = False
-    readonly_fields = ("amount", "platform_fee", "host_payout", "status", "method", "gateway_reference")
+    readonly_fields = ("amount", "platform_fee", "host_payout", "status", "method", "gateway_reference", "buy_order")
+    exclude = ("gateway_token", "gateway_payload")
 
 
 BookingAdmin.inlines = [PaymentInline]  # el pago se ve dentro de la reserva
@@ -20,7 +21,7 @@ BookingAdmin.inlines = [PaymentInline]  # el pago se ve dentro de la reserva
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ("id", "booking", "amount", "platform_fee", "host_payout", "status", "method", "created_at")
     list_filter = ("status", "method")
-    search_fields = ("booking__id", "gateway_reference", "booking__guest__username")
+    search_fields = ("booking__id", "gateway_reference", "buy_order", "booking__guest__username")
     date_hierarchy = "created_at"
     raw_id_fields = ("booking",)
     actions = [export_csv_action(["id", "booking", "amount", "platform_fee", "host_payout", "status", "method"])]

@@ -1,0 +1,41 @@
+name: Webpay (integración)
+
+# Comprueba contra el ambiente de INTEGRACIÓN real de Transbank que nuestro cliente habla bien su API:
+# crea una transacción de prueba y consulta su estado (no cobra nada; usa las credenciales públicas de pruebas).
+on:
+  push:
+    branches: [main]
+    paths: ["backend/apps/payments/**", ".github/workflows/webpay.yml"]
+  schedule:
+    - cron: "41 10 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      SECRET_KEY: ci-only-secret-key-not-used-anywhere-else-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Crear y consultar una transacción en Transbank (integración)
+        run: |
+          if ! OUT=$(python manage.py webpay_check 2>&1); then
+            echo "::error title=webpay_check::$(echo "$OUT" | tr '\n' ' ')"
+            exit 1
+          fi
+          echo "$OUT"
+          echo "::notice title=webpay_check::$(echo "$OUT" | tail -n 1)"

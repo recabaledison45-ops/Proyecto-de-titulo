@@ -2,13 +2,14 @@
 
 Todo se ejecuta **automáticamente en GitHub Actions** (`.github/workflows/ci.yml`) en cada push a `main` y en cada Pull Request.
 
-## Resumen verificado (14-oct-2026)
+## Resumen verificado (13-nov-2026)
 | Nivel | Herramienta | Cantidad | Resultado |
 |---|---|---|---|
-| Unitarias y de integración del backend | Django `TestCase` + DRF | **67** (66 en SQLite + 1 de concurrencia que solo corre en PostgreSQL, como en CI) | OK · cobertura de líneas **96 %** (umbral CI: 90 %) |
-| Extremo a extremo (navegador real) | Playwright (Chromium) | **26** | OK |
+| Unitarias y de integración del backend | Django `TestCase` + DRF | **91** (90 en SQLite + 1 de concurrencia que solo corre en PostgreSQL, como en CI) | OK · cobertura de líneas **95 %** (umbral CI: 90 %) |
+| Extremo a extremo (navegador real) | Playwright (Chromium) | **30** | OK |
 | · navegación pública, búsqueda y favoritos | | 7 | OK |
 | · registro, ingreso, reserva y panel del anfitrión | | 5 | OK |
+| · pago con tarjeta (Webpay simulado): aprobado, rechazado y reintento, anulado, resultado no falsificable | | 4 | OK |
 | · móvil (390 px) | | 3 | OK |
 | · accesibilidad WCAG 2.1 A/AA (axe) y teclado | | 7 | OK |
 | · SEO básico | | 4 | OK |
@@ -16,10 +17,10 @@ Todo se ejecuta **automáticamente en GitHub Actions** (`.github/workflows/ci.ym
 | Seguridad de dependencias | pip-audit · npm audit | backend · frontend · e2e | 0 vulnerabilidades tras la corrección (ver [SEGURIDAD.md](SEGURIDAD.md)) |
 | Seguridad dinámica | OWASP ZAP (API scan) | semanal y manual | Ejecutado en GitHub sin fallas; ver [SEGURIDAD.md](SEGURIDAD.md) |
 
-**Total automatizado: 93 pruebas** (67 + 26) además de las verificaciones de CI (migraciones, `check --deploy`, esquema OpenAPI,
+**Total automatizado: 121 pruebas** (91 + 30) además de las verificaciones de CI (migraciones, `check --deploy`, esquema OpenAPI,
 lint, build, imágenes Docker y configuración de Nginx).
 
-### Desglose de las 67 pruebas del backend
+### Desglose de las 91 pruebas del backend
 | Módulo | Pruebas | Qué cubre |
 |---|---|---|
 | `apps.bookings.tests` | 18 | Reglas de reserva: solape → 409, reservas consecutivas, cancelar libera fechas, anfitrión no reserva lo suyo, `max_guests`, estados |
@@ -28,6 +29,7 @@ lint, build, imágenes Docker y configuración de Nginx).
 | `apps.bookings.test_concurrency` | 1 | Doble reserva simultánea con hilos (**solo PostgreSQL**: `select_for_update`) |
 | `apps.listings.tests` | 18 | Búsqueda por mapa/fechas/personas/texto, orden por valoración, ficha técnica, dueño, baja lógica |
 | `apps.payments.tests` | 10 | Comisión 10 %, pasarelas, confirmación, reembolso por cancelación |
+| `apps.payments.test_webpay` | 24 | Pago con tarjeta: inicio, retorno aprobado/rechazado/anulado/tiempo agotado, idempotencia, monto inconsistente, reserva vencida durante el pago, reembolso a la tarjeta, reintentos |
 | `apps.reviews.tests` | 6 | Reseñas ciegas cruzadas y promedio |
 | `apps.users.tests` | 8 | Registro, JWT, perfil, límite de intentos |
 
@@ -71,4 +73,4 @@ la instancia AWS habría fallado); corregido.
 ## Qué NO cubre (y cómo se complementa)
 - Pruebas automáticas de accesibilidad detectan ~30–40 % de los problemas WCAG: ver lista manual en [ACCESIBILIDAD-SEO.md](ACCESIBILIDAD-SEO.md).
 - Solo se prueba Chromium; Firefox/Safari quedan para revisión manual en la UAT.
-- La pasarela de pago real (Webpay/Stripe) no existe en el MVP: se prueban la simulada y la transferencia informada.
+- El pago con tarjeta se prueba contra un **Webpay simulado** (misma API). Contra Transbank real solo se verifica en CI la creación y consulta de una transacción (`webpay.yml`); el pago completo con tarjeta de prueba en el ambiente de integración es una **prueba manual** (ver [PAGOS-WEBPAY.md](PAGOS-WEBPAY.md)).

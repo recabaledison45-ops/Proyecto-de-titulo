@@ -48,7 +48,22 @@ class BankTransferGateway(PaymentGateway):
         return f"MANUAL-REF-{payment.pk}"
 
 
-GATEWAYS = {"simulated": SimulatedGateway, "bank_transfer": BankTransferGateway}
+class WebpayGateway(PaymentGateway):
+    """Tarjeta por Webpay Plus. El cobro es en dos pasos (ver services.start_webpay / finish_webpay), no con charge()."""
+
+    method = "webpay"
+
+    def charge(self, *, booking, amount):
+        raise NotImplementedError("Webpay se inicia con services.start_webpay().")
+
+    def refund(self, *, payment):
+        from .webpay import WebpayClient  # import tardío: evita cargar la configuración si no se usa
+
+        result = WebpayClient().refund(payment.gateway_token, int(payment.amount))
+        return f"WEBPAY-{result.get('type', 'REFUND')}-{result.get('authorization_code') or payment.pk}"
+
+
+GATEWAYS = {"simulated": SimulatedGateway, "bank_transfer": BankTransferGateway, "webpay": WebpayGateway}
 
 
 def get_gateway(name=None):

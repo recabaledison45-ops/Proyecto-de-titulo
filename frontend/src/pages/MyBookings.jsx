@@ -16,15 +16,22 @@ import { fmtDate, fmtDateTime, money } from '@/lib/format'
 import { PAYMENT_STATUS, categoryLabel } from '@/lib/labels'
 
 function BookingItem({ b, reload }) {
-  const canPay = b.status === 'pending' && (!b.payment || b.payment.status === 'failed')
+  const canPay = b.status === 'pending' && (!b.payment || ['failed', 'pending', 'refunded'].includes(b.payment.status))
   const canReview = ['confirmed', 'completed'].includes(b.status) && !b.reviewed_by_me
   const canCancel = ['pending', 'confirmed'].includes(b.status)
-  const refundNote = b.payment?.status === 'succeeded'
-    ? 'Como la reserva está pagada, se registrará el reembolso. Los reembolsos por transferencia se coordinan con el anfitrión.'
-    : 'Las fechas quedarán libres para otras personas.'
+  const byCard = b.payment?.method === 'webpay'
+  const refundNote = b.payment?.status !== 'succeeded'
+    ? 'Las fechas quedarán libres para otras personas.'
+    : byCard
+      ? 'Como pagaste con tarjeta, el monto se devolverá a la misma tarjeta (el plazo depende de tu banco).'
+      : 'Como la reserva está pagada, se registrará el reembolso. Los reembolsos por transferencia se coordinan con el anfitrión.'
+  const paymentText = b.payment && (byCard && b.payment.status === 'succeeded'
+    ? `Pagado con tarjeta${b.payment.receipt?.card_last4 ? ` terminada en ${b.payment.receipt.card_last4}` : ''}`
+    : byCard && b.payment.status === 'failed' ? 'El pago con tarjeta no se completó (no se hizo ningún cargo)'
+      : byCard && b.payment.status === 'refunded' ? 'Pago devuelto a tu tarjeta' : PAYMENT_STATUS[b.payment.status])
 
   return (
-    <Card>
+    <Card data-booking-id={b.id}>
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div className="grid gap-1">
           <Badge variant="secondary" className="w-fit">{categoryLabel(b.listing.category)}</Badge>
@@ -39,8 +46,8 @@ function BookingItem({ b, reload }) {
           <span className="flex items-center gap-1.5"><Users className="size-4" /> {b.guests} {b.guests === 1 ? 'persona' : 'personas'}</span>
           <span className="font-semibold">{money(b.total_price)}</span>
         </div>
-        {b.payment && <p className="text-sm text-muted-foreground">{PAYMENT_STATUS[b.payment.status]}</p>}
-        {b.status === 'pending' && b.expires_at && !b.payment && (
+        {paymentText && <p className="text-sm text-muted-foreground">{paymentText}</p>}
+        {b.status === 'pending' && b.expires_at && canPay && (
           <p className="text-xs text-amber-800">Paga antes del {fmtDateTime(b.expires_at)} o la reserva expirará y se liberarán las fechas.</p>
         )}
         {b.cancel_reason && b.status !== 'confirmed' && (

@@ -57,7 +57,8 @@ class BookingSerializer(serializers.Serializer):
             return None
         return {"id": p.id, "status": p.status, "method": p.method, "amount": str(p.amount),
                 "platform_fee": str(p.platform_fee), "host_payout": str(p.host_payout),
-                "reported_at": p.reported_at, "confirmed_at": p.confirmed_at, "refunded_at": p.refunded_at}
+                "reported_at": p.reported_at, "confirmed_at": p.confirmed_at, "refunded_at": p.refunded_at,
+                "receipt": getattr(p, "receipt", None)}
 
     @extend_schema_field(OpenApiTypes.BOOL)
     def get_reviewed_by_me(self, obj):

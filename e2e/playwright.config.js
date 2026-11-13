@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test'
 const API_PORT = process.env.E2E_API_PORT || '8765'
 const WEB_PORT = process.env.E2E_WEB_PORT || '5199'
 const PYTHON = process.env.E2E_PYTHON || 'python'
+const WEBPAY_PORT = process.env.MOCK_WEBPAY_PORT || '8799'
 const BASE_URL = `http://127.0.0.1:${WEB_PORT}`
 
 export default defineConfig({
@@ -28,6 +29,13 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
   webServer: [
     {
+      command: 'node mock-webpay.mjs',
+      url: `http://127.0.0.1:${WEBPAY_PORT}/health`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+      env: { MOCK_WEBPAY_PORT: WEBPAY_PORT },
+    },
+    {
       // Backend real con una base SQLite desechable y los datos demo.
       command: `sh -c "rm -f e2e-test.sqlite3 && ${PYTHON} manage.py migrate --noinput && ${PYTHON} manage.py seed_demo && ${PYTHON} manage.py runserver 127.0.0.1:${API_PORT} --noreload"`,
       cwd: '../backend',
@@ -40,6 +48,11 @@ export default defineConfig({
         DATABASE_URL: 'sqlite:///e2e-test.sqlite3',
         DEBUG: 'true',
         EMAIL_BACKEND: 'django.core.mail.backends.console.EmailBackend',
+        // Pago con tarjeta: Webpay simulado (e2e/mock-webpay.mjs) y retorno al frontend de pruebas
+        WEBPAY_BASE_URL: `http://127.0.0.1:${WEBPAY_PORT}`,
+        FRONTEND_URL: BASE_URL,
+        // La suite inicia sesión muchas veces por minuto desde una sola IP (el límite real es 5/min)
+        THROTTLE_RATE_LOGIN: '200/min',
       },
     },
     {

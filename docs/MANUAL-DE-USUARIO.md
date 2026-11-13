@@ -33,14 +33,25 @@ Si ya tiene cuenta, **Ingresar**. Para cerrar sesión: menú de su cuenta (arrib
 > **Plazo:** una reserva pendiente que no se paga ni confirma **vence a las 48 horas** y las fechas se liberan.
 
 ### 1.5 Pagar
-Las reservas se pagan por **transferencia bancaria**:
-1. En **Mis reservas** pulse **Pagar** en la reserva. Verá el monto, los datos bancarios del anfitrión y una **referencia**.
-2. Haga la transferencia incluyendo la referencia y luego pulse **Ya transferí**.
+En **Mis reservas** pulse **Pagar** en la reserva. Hay dos formas:
+
+**Con tarjeta (recomendado): la reserva se confirma al instante**
+1. Pulse **Pagar … con tarjeta**. Se abre el sitio seguro de **Webpay (Transbank)**.
+2. Elija débito, crédito o prepago, ingrese los datos de su tarjeta y autorice el pago con su banco.
+3. Webpay lo devuelve a W Experiencias, donde verá el **comprobante** (monto, código de autorización, últimos 4 dígitos de la tarjeta)
+   y la reserva queda **Confirmada**. Puede imprimirlo.
+- Si la tarjeta es rechazada o usted anula el pago, **no se hace ningún cargo** y la reserva sigue pendiente: puede reintentar.
+- W Experiencias no ve ni guarda los datos de su tarjeta.
+
+**Por transferencia bancaria**
+1. En la misma ventana verá el monto, los datos bancarios del anfitrión y una **referencia**.
+2. Haga la transferencia incluyendo la referencia y pulse **Ya transferí**.
 3. El anfitrión confirma la recepción y la reserva pasa a **Confirmada**. Recibirá un correo.
 
 ### 1.6 Cancelar y reseñar
-- **Cancelar** (en Mis reservas) libera las fechas. Si ya había pagado, el pago queda marcado como **reembolsado**; la
-  devolución del dinero la coordina directamente con el anfitrión.
+- **Cancelar** (en Mis reservas) libera las fechas. Si pagó **con tarjeta**, el monto se devuelve automáticamente a la misma tarjeta
+  (el plazo en que lo ve depende de su banco). Si pagó por **transferencia**, el pago queda marcado como reembolsado y la devolución
+  la coordina con el anfitrión.
 - Cuando la experiencia termina, aparece **Reseñar**: puntúe de 1 a 5 y comente. Las reseñas son **ciegas**: se publican
   cuando usted y el anfitrión ya reseñaron, para que ninguna influya en la otra.
 
@@ -71,7 +82,7 @@ reservas vigentes.
 En **Reservas recibidas** puede filtrar por estado. Para cada reserva:
 | Acción | Cuándo |
 |---|---|
-| **Confirmar pago** | Cuando verificó que la transferencia llegó. La reserva queda Confirmada. |
+| **Confirmar pago** | Solo para transferencias: cuando verificó que llegó. La reserva queda Confirmada. Los pagos con tarjeta se confirman solos. |
 | **Rechazar** | Si no puede atender. Debe escribir un motivo; el huésped lo recibe y las fechas se liberan. |
 | **Cancelar** | Para anular una reserva confirmada. Se registra el reembolso. |
 | **Finalizar** | Cuando la experiencia terminó. Habilita las reseñas. |

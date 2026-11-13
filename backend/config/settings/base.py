@@ -5,6 +5,8 @@ from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -204,6 +206,26 @@ PLATFORM_FEE_PERCENT = Decimal(env("PLATFORM_FEE_PERCENT", "10"))
 BOOKING_PENDING_HOURS = int(env("BOOKING_PENDING_HOURS", "48"))
 PAYMENT_GATEWAY = env("PAYMENT_GATEWAY", "bank_transfer")  # bank_transfer | simulated
 SIMULATED_GATEWAY_DECLINE = env_bool("SIMULATED_GATEWAY_DECLINE", False)
+
+# --- Pago con tarjeta: Webpay Plus (Transbank) ---
+# integration = ambiente de pruebas de Transbank (tarjetas de prueba, no mueve dinero; credenciales públicas).
+# production  = cobros reales; exige WEBPAY_COMMERCE_CODE y WEBPAY_API_KEY del contrato con Transbank.
+WEBPAY_ENABLED = env_bool("WEBPAY_ENABLED", True)
+WEBPAY_ENV = env("WEBPAY_ENV", "integration")
+if WEBPAY_ENV not in ("integration", "production"):
+    raise ImproperlyConfigured("WEBPAY_ENV debe ser 'integration' o 'production'.")
+# Una variable vacía cuenta como "no definida": en integración se usan las credenciales públicas de Transbank.
+_webpay_test = WEBPAY_ENV == "integration"
+WEBPAY_COMMERCE_CODE = env("WEBPAY_COMMERCE_CODE", "").strip() or ("597055555532" if _webpay_test else "")
+WEBPAY_API_KEY = env("WEBPAY_API_KEY", "").strip() or (
+    "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C" if _webpay_test else ""
+)
+if WEBPAY_ENABLED and WEBPAY_ENV == "production" and not (WEBPAY_COMMERCE_CODE and WEBPAY_API_KEY):
+    raise ImproperlyConfigured("WEBPAY_ENV=production requiere WEBPAY_COMMERCE_CODE y WEBPAY_API_KEY.")
+# Opcionales: URL de retorno fija (si el backend no ve su dominio público) y host alternativo (solo pruebas).
+WEBPAY_RETURN_URL = env("WEBPAY_RETURN_URL", "")
+WEBPAY_BASE_URL = env("WEBPAY_BASE_URL", "")
+WEBPAY_TIMEOUT = int(env("WEBPAY_TIMEOUT", "20"))
 REVIEW_REQUIRE_CHECKOUT_PASSED = env_bool("REVIEW_REQUIRE_CHECKOUT_PASSED", False)
 
 # --- Correo ---

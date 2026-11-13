@@ -40,6 +40,8 @@ export const BOOKING_STATUS = {
 }
 
 export const PAYMENT_STATUS = {
+  pending: 'Pago con tarjeta sin terminar (no se hizo ningún cargo)',
+  refund_pending: 'Reembolso a tu tarjeta en gestión',
   reported: 'Pago informado, esperando confirmación del anfitrión',
   succeeded: 'Pago confirmado',
   failed: 'Pago descartado',

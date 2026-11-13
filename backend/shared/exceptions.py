@@ -15,6 +15,12 @@ class PaymentRejected(APIException):
     default_code = "payment_rejected"
 
 
+class ServiceUnavailable(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = "El servicio de pago con tarjeta no está disponible en este momento. Intenta de nuevo en unos minutos."
+    default_code = "payment_unavailable"
+
+
 def api_exception_handler(exc, context):
     """Respuestas de error uniformes: {detail, code} o {campo: [mensajes]}."""
     response = exception_handler(exc, context)

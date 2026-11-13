@@ -4,15 +4,17 @@
 > (KPI-08, tablas 3, 41 y 42, y la sección de arquitectura). Cada ajuste dice **qué verificar** y **qué texto/valor poner**. Todas las cifras
 > de abajo se obtuvieron ejecutando el repositorio el 14-oct-2026 y se pueden reproducir con los comandos de [PRUEBAS.md](PRUEBAS.md).
 
-## 1. Número de pruebas: README (67) vs. informe (18)
+## 1. Número de pruebas: README vs. informe (18)
+
+> Actualizado el 13-nov-2026: al agregar el pago con tarjeta el total subió de 93 a **121** (91 backend + 30 E2E).
 
 **Qué es verdad hoy:**
 | Concepto | Cantidad |
 |---|---|
-| Pruebas automatizadas del **backend** (Django) | **67** — 66 en SQLite + 1 de concurrencia que solo corre en PostgreSQL (en el CI corren las 67) |
-| Pruebas **E2E** del navegador (Playwright), incl. accesibilidad y SEO | **26** |
-| **Total automatizado** | **93** |
-| Cobertura de líneas del backend | 96 % |
+| Pruebas automatizadas del **backend** (Django) | **91** — 90 en SQLite + 1 de concurrencia que solo corre en PostgreSQL (en el CI corren las 67) |
+| Pruebas **E2E** del navegador (Playwright), incl. accesibilidad, SEO y pago con tarjeta | **30** |
+| **Total automatizado** | **121** |
+| Cobertura de líneas del backend | 95 % |
 
 **De dónde puede venir el "18":** coincide exactamente con las pruebas de `apps/bookings/tests.py` (18) y con las de
 `apps/listings/tests.py` (18), o con una versión anterior del conjunto. Compruébelo contra su versión del informe; lo importante es
@@ -21,15 +23,15 @@ que **el informe y el README digan lo mismo**.
 **Qué cambiar:**
 | Lugar | Acción |
 |---|---|
-| **KPI-08** (pruebas automatizadas) | Reemplazar 18 por **93 pruebas automatizadas (67 backend + 26 E2E)**, o por 67 si el KPI mide solo el backend; en ambos casos citar la cobertura de 96 %. Si la meta del KPI era ≥ 18, el resultado es *superada* |
-| **Tabla 3** | Actualizar el total y, si la tabla desglosa por módulo, usar la tabla de [PRUEBAS.md](PRUEBAS.md) (bookings 18 + flow 1 + reports 5 + concurrencia 1, listings 18, payments 10, reviews 6, users 8) |
-| **Tabla 41** y **Tabla 42** | Igual: sustituir el 18 por el valor que corresponda (67 / 26 / 93) según lo que mida cada tabla, y agregar las columnas "E2E" y "Carga" si no existen |
+| **KPI-08** (pruebas automatizadas) | Reemplazar 18 por **121 pruebas automatizadas (91 backend + 30 E2E)**, o por 91 si el KPI mide solo el backend; en ambos casos citar la cobertura de 95 %. Si la meta del KPI era ≥ 18, el resultado es *superada* |
+| **Tabla 3** | Actualizar el total y, si la tabla desglosa por módulo, usar la tabla de [PRUEBAS.md](PRUEBAS.md) (bookings 18 + flow 1 + reports 5 + concurrencia 1, listings 18, payments 10 + Webpay 24, reviews 6, users 8) |
+| **Tabla 41** y **Tabla 42** | Igual: sustituir el 18 por el valor que corresponda (91 / 30 / 121) según lo que mida cada tabla, y agregar las columnas "E2E" y "Carga" si no existen |
 | Texto que mencione "18 pruebas" | Buscar `18` en el documento completo (Ctrl+F) para no dejar ninguna referencia antigua |
 
 Texto sugerido (resultados de pruebas):
-> El proyecto cuenta con **93 pruebas automatizadas**: 67 pruebas unitarias y de integración del backend (cobertura de líneas del 96 %,
+> El proyecto cuenta con **121 pruebas automatizadas**: 91 pruebas unitarias y de integración del backend (cobertura de líneas del 95 %,
 > incluida una prueba de concurrencia sobre PostgreSQL que verifica que dos reservas simultáneas de las mismas fechas no puedan quedar ambas aceptadas)
-> y 26 pruebas extremo a extremo con Playwright que recorren los flujos de búsqueda, registro, reserva y gestión del anfitrión, la versión móvil,
+> y 30 pruebas extremo a extremo con Playwright que recorren los flujos de búsqueda, registro, reserva, pago con tarjeta y gestión del anfitrión, la versión móvil,
 > la accesibilidad (axe-core, WCAG 2.1 AA) y el SEO básico. Se ejecutan automáticamente en cada cambio mediante GitHub Actions.
 
 ## 2. Arquitectura: el informe dice VPS + Docker + Nginx, el repositorio estaba en Vercel y Render
@@ -66,7 +68,7 @@ la estimación de costos (≈ US$ 22–25/mes; verificar precios vigentes) y cua
 |---|---|---|---|---|
 | F-20 | CI/CD con GitHub Actions | **Hecho** (CI en verde en GitHub: backend/PostgreSQL, frontend, E2E, imágenes Docker) | `.github/workflows/ci.yml`, `deploy.yml`, `dependabot.yml` | `deploy.yml` se probará en el primer despliegue real a AWS |
 | F-21 | Despliegue completo: Nginx, TLS, respaldos, monitoreo | **Preparado y validado estáticamente** | `deploy/`, `infra/aws/`, [DESPLIEGUE-AWS.md](DESPLIEGUE-AWS.md) | **Desplegar en la cuenta AWS** y probar respaldo/restauración (no hay Docker ni AWS en el entorno de desarrollo) |
-| F-60 | Pruebas E2E con Playwright | **Hecho** (26/26 verdes) | `e2e/` | — |
+| F-60 | Pruebas E2E con Playwright | **Hecho** (30/30 verdes) | `e2e/` | — |
 | F-61 | Pruebas de carga con k6 | **Hecho** (script + umbrales + corrida local) | `loadtest/`, [PRUEBAS-CARGA.md](PRUEBAS-CARGA.md) | Repetir `load` y `stress` contra AWS y anotar resultados |
 | F-62 | pip-audit, npm audit y OWASP ZAP | **Auditorías hechas; ZAP de la API ejecutado sin fallas** | [SEGURIDAD.md](SEGURIDAD.md), `security.yml` | Clasificar los avisos del informe de ZAP y escanear el sitio ya desplegado (`ZAP_TARGET_URL`) |
 | F-63 | Accesibilidad y SEO básico | **Hecho** (automatizado) | [ACCESIBILIDAD-SEO.md](ACCESIBILIDAD-SEO.md), `e2e/tests/a11y.spec.js`, `seo.spec.js` | Revisión manual (lista incluida) y Lighthouse en producción; imagen `og:image` |
@@ -81,4 +83,14 @@ la estimación de costos (≈ US$ 22–25/mes; verificar precios vigentes) y cua
 - **Protección ante falsificación de IP** detrás de un proxy (`NUM_PROXIES`): sin ella el límite de peticiones se podía evadir.
 - **Cambio de teselas** de OpenStreetMap público (sin garantías; no apto para producción) a MapTiler.
 - **Limitaciones declaradas** (útiles para el capítulo de conclusiones / trabajo futuro): una sola instancia (sin alta disponibilidad); sin recuperación
-  de contraseña por correo; tokens en `localStorage`; SPA sin renderizado en servidor; pasarela de pago real (Webpay/Stripe) no integrada.
+  de contraseña por correo; tokens en `localStorage`; SPA sin renderizado en servidor; pago con tarjeta integrado con Webpay Plus pero **en ambiente de integración (pruebas)**: cobrar dinero real requiere el contrato y la validación de Transbank; el pago a los anfitriones (liquidación) es manual.
+
+## 5. Pago con tarjeta (agregado el 13-nov-2026)
+Si el informe dice "pago por transferencia" o "pasarela simulada", actualícelo: el sistema ahora ofrece **tarjeta de débito, crédito o prepago
+mediante Webpay Plus (Transbank)** además de la transferencia. Texto sugerido:
+> El pago se realiza con tarjeta a través de Webpay Plus de Transbank: el huésped es redirigido al formulario seguro de Transbank (la plataforma no
+> recibe ni almacena datos de tarjetas), y al volver el servidor confirma la transacción, registra el comprobante y confirma la reserva de inmediato.
+> Las cancelaciones generan la devolución automática a la misma tarjeta. Como alternativa se mantiene la transferencia bancaria informada.
+> La integración se validó en el ambiente de pruebas de Transbank; la operación con dinero real requiere el contrato comercial y el proceso de validación de Transbank.
+
+Detalle técnico y pasos para producción: [PAGOS-WEBPAY.md](PAGOS-WEBPAY.md).
