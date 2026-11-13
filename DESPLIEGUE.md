@@ -19,7 +19,8 @@ Arquitectura: **frontend en Vercel** + **backend y base de datos en Render**. Am
 1. Vercel → **Add New… → Project** → importa el mismo repositorio.
 2. **Root Directory:** `frontend` (muy importante). Framework: Vite (lo detecta solo).
 3. En **Environment Variables** agrega:
-   - `VITE_API_URL` = `https://TU-API.onrender.com/api/v1`  (la URL del paso 1, terminando en `/api/v1`)
+   - No hace falta ninguna variable: `frontend/vercel.json` reenvía `/api` y `/media` al backend de Render
+     (si su backend tiene otra dirección, cámbiela en ese archivo y en `render.yaml`).
 4. **Deploy**. Vercel te dará una dirección como `https://wexperiencias.vercel.app`.
 
 ## 3. Conectar ambos
@@ -38,6 +39,6 @@ Usuarios de prueba (se cargan solos con `SEED_DEMO=true`): `huesped`, `anfitrion
 - Para tener un dominio propio (ej. `wexperiencias.cl`) agrégalo en Vercel → Settings → Domains y luego ponlo en `CORS_ALLOWED_ORIGINS`.
 
 ## Si algo falla
-- Pantalla sin ofertas / error de red: revisa `VITE_API_URL` (debe terminar en `/api/v1`) y vuelve a desplegar en Vercel (las variables solo se aplican en un nuevo deploy).
+- Pantalla sin ofertas / error de red: revisa que la dirección del backend en `frontend/vercel.json` sea la de tu servicio en Render y que el servicio esté *Live*; vuelve a desplegar en Vercel (las variables solo se aplican en un nuevo deploy).
 - Error de CORS en la consola del navegador: `CORS_ALLOWED_ORIGINS` no coincide exactamente con tu dirección de Vercel.
 - Logs del backend: Render → servicio → **Logs**.
