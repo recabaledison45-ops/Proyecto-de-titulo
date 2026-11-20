@@ -18,6 +18,18 @@ test.describe('Móvil (390 px)', () => {
     expect(await sinDesborde(page)).toBe(true)
   })
 
+  test('Explorar pliega los filtros y el mapa ocupa la pantalla', async ({ page }) => {
+    await page.goto('/explore')
+    await expect(page.locator('section[aria-label=Resultados] article').first()).toBeInViewport()
+    await expect(page.locator('#f-in')).toBeHidden()
+    await page.getByRole('button', { name: /Filtros/ }).click()
+    await expect(page.locator('#f-in')).toBeVisible()
+    await page.getByRole('button', { name: /Filtros/ }).click()
+    await page.getByRole('button', { name: /Mapa/ }).click()
+    const alto = await page.locator('.leaflet-container').evaluate((el) => el.getBoundingClientRect().height)
+    expect(alto).toBeGreaterThan(500)
+  })
+
   test('Explorar lista resultados y alterna con el mapa', async ({ page }) => {
     await page.goto('/explore')
     await expect(page.locator('section[aria-label=Resultados] article').first()).toBeVisible()

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { Bed, Compass, LayoutGrid, List, Map as MapIcon, Mountain, Package, Search, X } from 'lucide-react'
+import { Bed, Compass, LayoutGrid, List, Map as MapIcon, Mountain, Package, Search, SlidersHorizontal, X } from 'lucide-react'
 import { searchListings } from '@/api/listings'
 import { errorMessage } from '@/api/client'
 import ListingCard from '@/components/ListingCard'
@@ -113,6 +113,8 @@ export default function Explore() {
   const [error, setError] = useState('')
   const [hoverId, setHoverId] = useState(null)
   const [mobileView, setMobileView] = useState('list')
+  // En el teléfono los filtros (salvo la búsqueda) van plegados para que se vean los resultados y el mapa completo.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [mapStyle, setMapStyle] = useState(MAP_STYLES[0])
 
   const datesInvalid = filters.check_in && filters.check_out && filters.check_out <= filters.check_in
@@ -166,6 +168,8 @@ export default function Explore() {
   }, [ready, query, queryKey])
 
   const hasFilters = FILTER_KEYS.some((k) => params.has(k))
+  const activeFilters = ['dest', 'check_in', 'check_out', 'guests', 'difficulty'].filter((k) => params.has(k)).length
+  const folded = filtersOpen ? '' : 'max-lg:hidden'
 
   return (
     <div className="flex h-[calc(100dvh-4.5rem)] flex-col">
@@ -194,7 +198,11 @@ export default function Explore() {
                 onChange={(e) => setQDraft(e.target.value)} onBlur={() => { if (qDraft.trim() !== filters.q) set({ q: qDraft.trim() }) }} />
             </div>
           </div>
-          <div className="grid w-44 gap-1">
+          <Button type="button" variant="outline" className="lg:hidden" aria-expanded={filtersOpen} aria-controls="f-more"
+            onClick={() => setFiltersOpen((o) => !o)}>
+            <SlidersHorizontal /> Filtros{activeFilters > 0 && <span className="grid size-5 place-items-center rounded-full bg-primary text-[11px] text-primary-foreground">{activeFilters}</span>}
+          </Button>
+          <div id="f-more" className={cn('grid w-44 gap-1', folded)}>
             <Label htmlFor="f-dest">Destino</Label>
             <Select value={filters.dest} onValueChange={(v) => set({ dest: v, q: '' })}>
               <SelectTrigger id="f-dest"><SelectValue /></SelectTrigger>
@@ -204,20 +212,20 @@ export default function Explore() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-1">
+          <div className={cn('grid gap-1', folded)}>
             <Label htmlFor="f-in">Llegada</Label>
             <Input id="f-in" type="date" min={todayISO()} value={filters.check_in} onChange={(e) => set({ check_in: e.target.value })} />
           </div>
-          <div className="grid gap-1">
+          <div className={cn('grid gap-1', folded)}>
             <Label htmlFor="f-out">Salida</Label>
             <Input id="f-out" type="date" min={filters.check_in || todayISO()} value={filters.check_out}
               aria-invalid={Boolean(datesInvalid)} onChange={(e) => set({ check_out: e.target.value })} />
           </div>
-          <div className="grid w-24 gap-1">
+          <div className={cn('grid w-24 gap-1', folded)}>
             <Label htmlFor="f-guests">Personas</Label>
             <Input id="f-guests" type="number" min={1} max={50} value={filters.guests} onChange={(e) => set({ guests: e.target.value })} />
           </div>
-          <div className="grid w-36 gap-1">
+          <div className={cn('grid w-36 gap-1', folded)}>
             <Label htmlFor="f-diff">Dificultad</Label>
             <Select value={filters.difficulty} onValueChange={(v) => set({ difficulty: v })}>
               <SelectTrigger id="f-diff"><SelectValue /></SelectTrigger>
