@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { DESTINATIONS } from '@/lib/destinations'
 
-const HERO_IMAGE = 'https://picsum.photos/seed/maule-hero/1920/1000'
+const HERO_IMAGE = '/photos/hero.jpg'
 
 const CATEGORY_CARDS = [
   { id: 'lodging', label: 'Alojamientos', hint: 'Cabañas y casonas', icon: Bed, from: '#fb7185', to: '#be123c' },
@@ -22,7 +22,7 @@ const CATEGORY_CARDS = [
 const BENEFITS = [
   { icon: Leaf, title: 'Turismo regenerativo', text: 'Experiencias que cuidan el territorio y apoyan a emprendimientos locales del Maule.' },
   { icon: ShieldCheck, title: 'Reserva sin dobles cupos', text: 'Disponibilidad en tiempo real: lo que ves libre, es tuyo.' },
-  { icon: Wallet, title: 'Precios claros', text: 'Ves el total antes de reservar. Pagas por transferencia directa al anfitrión.' },
+  { icon: Wallet, title: 'Precios claros', text: 'Ves el total antes de reservar. Pagas con tarjeta (Webpay) o por transferencia.' },
   { icon: Heart, title: 'Reseñas reales', text: 'Solo opinan quienes reservaron, y se publican de forma cruzada y honesta.' },
 ]
 

@@ -5,7 +5,7 @@ Todo se ejecuta **automáticamente en GitHub Actions** (`.github/workflows/ci.ym
 ## Resumen verificado (13-nov-2026)
 | Nivel | Herramienta | Cantidad | Resultado |
 |---|---|---|---|
-| Unitarias y de integración del backend | Django `TestCase` + DRF | **91** (90 en SQLite + 1 de concurrencia que solo corre en PostgreSQL, como en CI) | OK · cobertura de líneas **95 %** (umbral CI: 90 %) |
+| Unitarias y de integración del backend | Django `TestCase` + DRF | **93** (92 en SQLite + 1 de concurrencia que solo corre en PostgreSQL, como en CI) | OK · cobertura de líneas **95 %** (umbral CI: 90 %) |
 | Extremo a extremo (navegador real) | Playwright (Chromium) | **30** | OK |
 | · navegación pública, búsqueda y favoritos | | 7 | OK |
 | · registro, ingreso, reserva y panel del anfitrión | | 5 | OK |
@@ -17,10 +17,10 @@ Todo se ejecuta **automáticamente en GitHub Actions** (`.github/workflows/ci.ym
 | Seguridad de dependencias | pip-audit · npm audit | backend · frontend · e2e | 0 vulnerabilidades tras la corrección (ver [SEGURIDAD.md](SEGURIDAD.md)) |
 | Seguridad dinámica | OWASP ZAP (API scan) | semanal y manual | Ejecutado en GitHub sin fallas; ver [SEGURIDAD.md](SEGURIDAD.md) |
 
-**Total automatizado: 121 pruebas** (91 + 30) además de las verificaciones de CI (migraciones, `check --deploy`, esquema OpenAPI,
+**Total automatizado: 123 pruebas** (93 + 30) además de las verificaciones de CI (migraciones, `check --deploy`, esquema OpenAPI,
 lint, build, imágenes Docker y configuración de Nginx).
 
-### Desglose de las 91 pruebas del backend
+### Desglose de las 93 pruebas del backend
 | Módulo | Pruebas | Qué cubre |
 |---|---|---|
 | `apps.bookings.tests` | 18 | Reglas de reserva: solape → 409, reservas consecutivas, cancelar libera fechas, anfitrión no reserva lo suyo, `max_guests`, estados |
@@ -31,7 +31,7 @@ lint, build, imágenes Docker y configuración de Nginx).
 | `apps.payments.tests` | 10 | Comisión 10 %, pasarelas, confirmación, reembolso por cancelación |
 | `apps.payments.test_webpay` | 24 | Pago con tarjeta: inicio, retorno aprobado/rechazado/anulado/tiempo agotado, idempotencia, monto inconsistente, reserva vencida durante el pago, reembolso a la tarjeta, reintentos |
 | `apps.reviews.tests` | 6 | Reseñas ciegas cruzadas y promedio |
-| `apps.users.tests` | 8 | Registro, JWT, perfil, límite de intentos |
+| `apps.users.tests` | 10 | Registro, JWT, perfil, límite de intentos |
 
 ## Cómo ejecutarlas
 

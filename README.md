@@ -12,7 +12,7 @@ guías locales y actividades/tours** bajo un mismo motor de búsqueda, reservas,
 - **Base de datos:** SQLite por defecto; PostgreSQL con variables de entorno.
 - **Contenedores y producción:** Docker (imagen multi-stage del backend y de Nginx + frontend), Docker Compose con PostgreSQL,
   Nginx con TLS (Let's Encrypt), respaldos a S3 y monitoreo con CloudWatch en **AWS (EC2)**.
-- **Calidad:** GitHub Actions (CI/CD), 91 pruebas del backend, 30 pruebas E2E con Playwright (incluye accesibilidad con axe y el pago con tarjeta),
+- **Calidad:** GitHub Actions (CI/CD), 93 pruebas del backend, 30 pruebas E2E con Playwright (incluye accesibilidad con axe y el pago con tarjeta),
   carga con k6 y auditorías de seguridad (pip-audit, npm audit, OWASP ZAP).
 
 ```
@@ -153,7 +153,7 @@ curl "$B/listings/?category=activity"
 ### Pruebas
 ```bash
 cd backend
-python manage.py test               # 91 pruebas (1 se omite sin PostgreSQL: la de concurrencia)
+python manage.py test               # 93 pruebas (1 se omite sin PostgreSQL: la de concurrencia)
 coverage run --source=apps,shared manage.py test && coverage report     # cobertura 95 %
 
 cd ../e2e && npm ci && npx playwright install chromium
@@ -238,3 +238,6 @@ Auth: `Authorization: Bearer <access>` (access 30 min, refresh 7 días con rotac
   prueba de carga contra el entorno AWS real, despliegue de la plantilla `infra/aws/` en la cuenta de AWS, y la UAT con la clienta
   ([docs/UAT.md](docs/UAT.md)). Docker, CI/CD, E2E, carga, auditorías, accesibilidad/SEO, manual y runbooks **ya están incluidos**.
 - Sin recuperación de contraseña por correo (la restablece un administrador) ni renderizado en servidor para vistas previas por oferta.
+
+## Créditos de fotos
+Las fotos referenciales de `frontend/public/photos/` provienen del conjunto *Sample Images* (yavuzceliker/sample-images), derivadas de imágenes de [Pixabay](https://pixabay.com/service/license/) y de uso libre. Son ilustrativas: no corresponden a los lugares reales de cada oferta.

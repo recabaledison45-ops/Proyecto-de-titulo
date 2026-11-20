@@ -83,3 +83,30 @@ class SeedDemoTests(APITestCase):
         self.assertEqual(Booking.objects.count(), 2)
         self.assertTrue(User.objects.get(username="anfitrion").check_password("demo1234"))
         self.assertTrue(Listing.objects.filter(booking_mode="shared").exists())
+
+    def test_demo_admin_with_known_password_never_exists_in_production(self):
+        from django.core.management import call_command
+        from django.test import override_settings
+
+        User.objects.create_superuser("admin", "admin@example.com", "demo1234")  # como lo dejaba la versión anterior
+        with override_settings(DEBUG=False):
+            call_command("seed_demo", verbosity=0)
+        admin = User.objects.get(username="admin")
+        self.assertFalse(admin.check_password("demo1234"))
+        self.assertFalse(admin.has_usable_password())
+
+    def test_seed_uses_site_photos_and_replaces_old_random_ones(self):
+        from django.core.management import call_command
+        from django.test import override_settings
+
+        from apps.listings.models import Listing
+
+        with override_settings(FRONTEND_URL="https://sitio.example"):
+            call_command("seed_demo", verbosity=0)
+            cabin = Listing.objects.get(title__startswith="Cabaña")
+            self.assertEqual(cabin.photo_url, "https://sitio.example/photos/cabana-mar.jpg")
+            Listing.objects.filter(pk=cabin.pk).update(photo_url="https://picsum.photos/seed/cabana-mar/900/600")
+            Listing.objects.filter(title__startswith="Casona").update(photo_url="https://fotos.example/mi-foto.jpg")
+            call_command("seed_demo", verbosity=0)
+        self.assertEqual(Listing.objects.get(pk=cabin.pk).photo_url, "https://sitio.example/photos/cabana-mar.jpg")
+        self.assertEqual(Listing.objects.get(title__startswith="Casona").photo_url, "https://fotos.example/mi-foto.jpg")

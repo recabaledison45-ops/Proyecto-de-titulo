@@ -115,7 +115,7 @@ export default function BookingWidget({ listing, booked, onBooked }) {
       <Button size="lg" className="mt-4 w-full text-base" disabled={busy || nights < 1 || isOwner} onClick={reserve}>
         {isOwner ? 'Es tu propia oferta' : busy ? 'Reservando…' : user ? 'Reservar' : 'Ingresar para reservar'}
       </Button>
-      <p className="mt-3 text-center text-xs text-muted-foreground">No se te cobra todavía: pagas por transferencia después de reservar.</p>
+      <p className="mt-3 text-center text-xs text-muted-foreground">No se te cobra todavía: después de reservar pagas con tarjeta (Webpay) o por transferencia.</p>
     </div>
   )
 }

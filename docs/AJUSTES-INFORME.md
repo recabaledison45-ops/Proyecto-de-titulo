@@ -6,14 +6,14 @@
 
 ## 1. Número de pruebas: README vs. informe (18)
 
-> Actualizado el 13-nov-2026: al agregar el pago con tarjeta el total subió de 93 a **121** (91 backend + 30 E2E).
+> Actualizado el 13-nov-2026: al agregar el pago con tarjeta el total subió de 93 a **123** (93 backend + 30 E2E).
 
 **Qué es verdad hoy:**
 | Concepto | Cantidad |
 |---|---|
-| Pruebas automatizadas del **backend** (Django) | **91** — 90 en SQLite + 1 de concurrencia que solo corre en PostgreSQL (en el CI corren las 67) |
+| Pruebas automatizadas del **backend** (Django) | **93** — 92 en SQLite + 1 de concurrencia que solo corre en PostgreSQL (en el CI corren las 67) |
 | Pruebas **E2E** del navegador (Playwright), incl. accesibilidad, SEO y pago con tarjeta | **30** |
-| **Total automatizado** | **121** |
+| **Total automatizado** | **123** |
 | Cobertura de líneas del backend | 95 % |
 
 **De dónde puede venir el "18":** coincide exactamente con las pruebas de `apps/bookings/tests.py` (18) y con las de
@@ -23,13 +23,13 @@ que **el informe y el README digan lo mismo**.
 **Qué cambiar:**
 | Lugar | Acción |
 |---|---|
-| **KPI-08** (pruebas automatizadas) | Reemplazar 18 por **121 pruebas automatizadas (91 backend + 30 E2E)**, o por 91 si el KPI mide solo el backend; en ambos casos citar la cobertura de 95 %. Si la meta del KPI era ≥ 18, el resultado es *superada* |
-| **Tabla 3** | Actualizar el total y, si la tabla desglosa por módulo, usar la tabla de [PRUEBAS.md](PRUEBAS.md) (bookings 18 + flow 1 + reports 5 + concurrencia 1, listings 18, payments 10 + Webpay 24, reviews 6, users 8) |
-| **Tabla 41** y **Tabla 42** | Igual: sustituir el 18 por el valor que corresponda (91 / 30 / 121) según lo que mida cada tabla, y agregar las columnas "E2E" y "Carga" si no existen |
+| **KPI-08** (pruebas automatizadas) | Reemplazar 18 por **123 pruebas automatizadas (93 backend + 30 E2E)**, o por 93 si el KPI mide solo el backend; en ambos casos citar la cobertura de 95 %. Si la meta del KPI era ≥ 18, el resultado es *superada* |
+| **Tabla 3** | Actualizar el total y, si la tabla desglosa por módulo, usar la tabla de [PRUEBAS.md](PRUEBAS.md) (bookings 18 + flow 1 + reports 5 + concurrencia 1, listings 18, payments 10 + Webpay 24, reviews 6, users 10) |
+| **Tabla 41** y **Tabla 42** | Igual: sustituir el 18 por el valor que corresponda (93 / 30 / 123) según lo que mida cada tabla, y agregar las columnas "E2E" y "Carga" si no existen |
 | Texto que mencione "18 pruebas" | Buscar `18` en el documento completo (Ctrl+F) para no dejar ninguna referencia antigua |
 
 Texto sugerido (resultados de pruebas):
-> El proyecto cuenta con **121 pruebas automatizadas**: 91 pruebas unitarias y de integración del backend (cobertura de líneas del 95 %,
+> El proyecto cuenta con **123 pruebas automatizadas**: 93 pruebas unitarias y de integración del backend (cobertura de líneas del 95 %,
 > incluida una prueba de concurrencia sobre PostgreSQL que verifica que dos reservas simultáneas de las mismas fechas no puedan quedar ambas aceptadas)
 > y 30 pruebas extremo a extremo con Playwright que recorren los flujos de búsqueda, registro, reserva, pago con tarjeta y gestión del anfitrión, la versión móvil,
 > la accesibilidad (axe-core, WCAG 2.1 AA) y el SEO básico. Se ejecutan automáticamente en cada cambio mediante GitHub Actions.

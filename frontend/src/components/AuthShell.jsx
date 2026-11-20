@@ -5,7 +5,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
   return (
     <div className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-7xl lg:grid-cols-2">
       <aside className="relative hidden overflow-hidden bg-gradient-to-br from-[#ff385c] via-[#d70466] to-[#5b21b6] p-12 text-white lg:flex lg:flex-col lg:justify-between" aria-hidden="true">
-        <img src="https://picsum.photos/seed/maule-login/1000/1200" alt="" onError={(e) => { e.currentTarget.style.display = 'none' }}
+        <img src="/photos/login.jpg" alt="" onError={(e) => { e.currentTarget.style.display = 'none' }}
           className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay" />
         <p className="relative flex items-center gap-2 text-2xl font-extrabold"><Logo className="size-10" /> W Experiencias</p>
         <div className="relative">
