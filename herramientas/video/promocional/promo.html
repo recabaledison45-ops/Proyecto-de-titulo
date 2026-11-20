@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Figtree;src:url(fonts/figtree-latin-wght-normal.woff2) format('woff2');font-weight:300 900}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#0f0d14;font-family:Figtree,Inter,sans-serif;color:#fff}
+.layer{position:absolute;inset:0;overflow:hidden}
+.bg{position:absolute;inset:0;background:#13111a}
+.glow{position:absolute;border-radius:50%;filter:blur(120px);opacity:.75}
+.abs{position:absolute}
+.grad{background:linear-gradient(90deg,#ff5a7a,#ff385c 35%,#d70466);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill{display:inline-flex;align-items:center;gap:12px;padding:12px 24px;border-radius:999px;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);font-size:26px;font-weight:600;backdrop-filter:blur(8px)}
+.logo{width:180px;height:180px;border-radius:48px;background:linear-gradient(135deg,#ff385c,#d70466);display:grid;place-items:center;font-size:118px;font-weight:850;box-shadow:0 30px 80px rgba(227,28,95,.55)}
+.browser{position:absolute;border-radius:22px;background:#fff;box-shadow:0 40px 120px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08);overflow:hidden;transform-style:preserve-3d}
+.bar{height:46px;background:#f1f1f4;display:flex;align-items:center;gap:9px;padding:0 18px;border-bottom:1px solid #e3e3e8}
+.dot{width:13px;height:13px;border-radius:50%}
+.url{margin-left:18px;flex:1;height:28px;border-radius:9px;background:#fff;color:#6b6b78;font-size:15px;display:flex;align-items:center;padding:0 14px;gap:8px;font-weight:500}
+.screen{position:relative;overflow:hidden;background:#fff}
+.screen img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;transform-origin:0 0}
+.label{font-size:24px;font-weight:700;letter-spacing:4px;color:#ff7a95;text-transform:uppercase}
+.h{font-weight:800;letter-spacing:-2.5px;line-height:1.02}
+.chip{display:inline-flex;align-items:center;gap:12px;padding:14px 22px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-size:26px;font-weight:600}
+.chip svg,.badge svg{flex:none}
+.badge{position:absolute;display:flex;align-items:center;gap:16px;padding:18px 26px;border-radius:20px;background:#fff;color:#1d1b22;font-size:26px;font-weight:700;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.badge small{display:block;font-size:18px;font-weight:500;color:#6a6672;margin-top:2px}
+.ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#ff385c,#d70466)}
+.cat{position:absolute;width:330px;height:190px;border-radius:30px;padding:30px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.cat b{font-size:36px;font-weight:800}
+.photo{position:absolute;background-size:cover;background-position:center}
+.word{display:inline-block;will-change:transform,opacity}
+</style></head><body>
+
+<!-- ======================= S1 gancho ======================= -->
+<div class="layer" id="s1">
+  <div class="photo" id="s1p1" style="left:0;top:0;width:640px;height:1080px;background-image:url(photos/hero.jpg)"></div>
+  <div class="photo" id="s1p2" style="left:640px;top:0;width:640px;height:1080px;background-image:url(photos/vichuquen.jpg)"></div>
+  <div class="photo" id="s1p3" style="left:1280px;top:0;width:640px;height:1080px;background-image:url(photos/siete-tazas.jpg)"></div>
+  <div class="abs" style="inset:0;background:linear-gradient(180deg,rgba(15,13,20,.55),rgba(15,13,20,.78) 60%,rgba(15,13,20,.92))"></div>
+  <div class="abs" id="s1pill" style="left:0;right:0;top:250px;text-align:center"><span class="pill">📍 Región del Maule · Chile</span></div>
+  <div class="abs h" id="s1t" style="left:0;right:0;top:360px;text-align:center;font-size:92px"></div>
+</div>
+
+<!-- ======================= S2 marca ======================= -->
+<div class="layer" id="s2">
+  <div class="bg"></div>
+  <div class="glow" id="s2g1" style="width:900px;height:900px;background:#ff385c"></div>
+  <div class="glow" id="s2g2" style="width:800px;height:800px;background:#7c1fd1"></div>
+  <div class="abs logo" id="s2logo" style="left:870px;top:150px">W</div>
+  <div class="abs h" id="s2title" style="left:0;right:0;top:370px;text-align:center;font-size:140px">W Experiencias</div>
+  <div class="abs" id="s2tag" style="left:0;right:0;top:535px;text-align:center;font-size:36px;color:rgba(255,255,255,.82);font-weight:500">Turismo regenerativo y de bienestar en el Maule</div>
+  <div class="cat" id="cat0" style="left:225px;top:690px;background:linear-gradient(135deg,#ff5a7a,#d70466)"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></svg><b>Alojamientos</b></div>
+  <div class="cat" id="cat1" style="left:595px;top:690px;background:linear-gradient(135deg,#ffb020,#e8590c)"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg><b>Paquetes</b></div>
+  <div class="cat" id="cat2" style="left:965px;top:690px;background:linear-gradient(135deg,#1fd19b,#047857)"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3z"/></svg><b>Guías locales</b></div>
+  <div class="cat" id="cat3" style="left:1335px;top:690px;background:linear-gradient(135deg,#4f8bff,#1d4ed8)"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2z"/></svg><b>Actividades</b></div>
+</div>
+
+<!-- ======================= S3 búsqueda + mapa ======================= -->
+<div class="layer" id="s3">
+  <div class="bg"></div>
+  <div class="glow" id="s3g" style="width:900px;height:900px;background:#ff385c;left:-300px;top:400px;opacity:.5"></div>
+  <div class="abs" id="s3txt" style="left:110px;top:250px;width:560px">
+    <div class="label">01 · Busca</div>
+    <div class="h" style="font-size:86px;margin-top:22px">Encuentra tu<br><span class="grad">próxima escapada</span></div>
+    <div id="s3chips" style="margin-top:46px;display:flex;flex-wrap:wrap;gap:16px">
+      <span class="chip">📍 Destino</span><span class="chip">📅 Fechas</span><span class="chip">👥 Personas</span><span class="chip">🗺️ Mapa interactivo</span>
+    </div>
+  </div>
+  <div class="browser" id="b3" style="left:710px;top:200px;width:1120px"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url">🔒 proyecto-de-titulo-p8gc.vercel.app</span></div><div class="screen" style="height:525px"><img id="b3img" data-live="1"></div></div>
+</div>
+
+<!-- ======================= S4 ficha + reserva ======================= -->
+<div class="layer" id="s4">
+  <div class="bg"></div>
+  <div class="glow" id="s4g" style="width:900px;height:900px;background:#7c1fd1;right:-300px;top:-200px;opacity:.55"></div>
+  <div class="browser" id="b4" style="left:90px;top:200px;width:1120px"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url">🔒 proyecto-de-titulo-p8gc.vercel.app/listings/1</span></div><div class="screen" style="height:525px"><img id="b4img" data-live="1"></div></div>
+  <div class="abs" id="s4txt" style="left:1300px;top:250px;width:560px">
+    <div class="label">02 · Elige</div>
+    <div class="h" style="font-size:80px;margin-top:22px">Reseñas reales,<br><span class="grad">precio claro</span></div>
+  </div>
+  <div class="badge" id="s4b1" style="left:1300px;top:560px"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span><span>Reseñas verificadas<small>Solo opina quien reservó</small></span></div>
+  <div class="badge" id="s4b2" style="left:1300px;top:690px"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><span>Disponibilidad real<small>Sin reservas duplicadas</small></span></div>
+  <div class="badge" id="s4b3" style="left:1300px;top:820px"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span>Total al instante<small>Sin sorpresas al pagar</small></span></div>
+</div>
+
+<!-- ======================= S5 pago ======================= -->
+<div class="layer" id="s5">
+  <div class="bg"></div>
+  <div class="glow" id="s5g" style="width:1000px;height:1000px;background:#ff385c;left:600px;top:500px;opacity:.45"></div>
+  <div class="abs" id="s5txt" style="left:110px;top:120px">
+    <div class="label">03 · Paga</div>
+    <div class="h" style="font-size:72px;margin-top:16px">Pago seguro con <span class="grad">tarjeta</span></div>
+  </div>
+  <div class="browser" id="b5" style="left:110px;top:330px;width:1120px"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url" id="b5url">🔒 proyecto-de-titulo-p8gc.vercel.app/bookings</span></div><div class="screen" style="height:525px"><img id="b5img" data-live="1"></div></div>
+  <div class="badge" id="s5b1" style="left:1320px;top:400px"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span>Webpay Plus<small>Transbank · débito y crédito</small></span></div>
+  <div class="badge" id="s5b2" style="left:1320px;top:530px"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Datos protegidos<small>No guardamos tu tarjeta</small></span></div>
+  <div class="abs" id="s5ok" style="left:1320px;top:680px;width:470px;padding:30px;border-radius:26px;background:linear-gradient(135deg,#10b981,#047857);box-shadow:0 30px 70px rgba(16,185,129,.45);display:flex;align-items:center;gap:22px">
+    <svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>
+    <div><div style="font-size:36px;font-weight:800">¡Reserva confirmada!</div><div style="font-size:21px;opacity:.9;margin-top:4px">Comprobante al instante</div></div>
+  </div>
+</div>
+
+<!-- ======================= S6 anfitrión ======================= -->
+<div class="layer" id="s6">
+  <div class="bg"></div>
+  <div class="glow" id="s6g" style="width:900px;height:900px;background:#2563eb;left:-250px;top:-250px;opacity:.45"></div>
+  <div class="abs" id="s6txt" style="left:110px;top:230px;width:600px">
+    <div class="label">04 · Gestiona</div>
+    <div class="h" style="font-size:80px;margin-top:22px">Tu negocio,<br><span class="grad">en un solo panel</span></div>
+  </div>
+  <div class="abs" id="s6list" style="left:110px;top:560px;display:grid;gap:18px">
+    <span class="chip" id="s6c0">✅ Reservas recibidas y pagos</span>
+    <span class="chip" id="s6c1">✅ Publica y edita tus ofertas</span>
+    <span class="chip" id="s6c2">✅ Reportes de ingresos y turistas</span>
+  </div>
+  <div class="browser" id="b6" style="left:730px;top:220px;width:1120px"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url">🔒 proyecto-de-titulo-p8gc.vercel.app/account</span></div><div class="screen" style="height:525px"><img id="b6img" data-live="1"></div></div>
+</div>
+
+<!-- ======================= S7 cierre ======================= -->
+<div class="layer" id="s7">
+  <div class="bg"></div>
+  <div class="glow" id="s7g1" style="width:1000px;height:1000px;background:#ff385c;opacity:.6"></div>
+  <div class="glow" id="s7g2" style="width:900px;height:900px;background:#7c1fd1;opacity:.55"></div>
+  <div class="abs logo" id="s7logo" style="left:870px;top:170px">W</div>
+  <div class="abs h" id="s7title" style="left:0;right:0;top:390px;text-align:center;font-size:150px">W Experiencias</div>
+  <div class="abs" id="s7tag" style="left:0;right:0;top:575px;text-align:center;font-size:42px;font-weight:600"><span class="grad">Turismo regenerativo,</span> hecho en el Maule</div>
+  <div class="abs" id="s7url" style="left:0;right:0;top:690px;text-align:center"><span class="pill" style="font-size:28px">🌐 proyecto-de-titulo-p8gc.vercel.app</span></div>
+  <div class="abs" id="s7foot" style="left:0;right:0;top:900px;text-align:center;font-size:24px;color:rgba(255,255,255,.65);letter-spacing:3px">PROYECTO DE TÍTULO · 2026</div>
+</div>
+<div class="abs" id="black" style="inset:0;background:#000;opacity:0"></div>
+
+<script>
+const $ = (id) => document.getElementById(id)
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+const p = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const lerp = (a, b, k) => a + (b - a) * k
+let TL = null, FRAMES = null
+// aparece: sube y se hace visible
+function rise(el, t, at, dist = 40, dur = 0.6) { const k = eo(p(t, at, at + dur)); el.style.opacity = k; el.style.transform = `translateY(${(1 - k) * dist}px)`; return k }
+function pop(el, t, at, dur = 0.6, base = '') { const k = p(t, at, at + dur); el.style.opacity = clamp(k * 3); el.style.transform = `${base} scale(${lerp(0.4, 1, back(k))})`; return k }
+// reproduce un clip de la app dentro de una ventana de navegador
+function clip(img, name, srcStart, rate, lt, segStart) {
+  const n = FRAMES[name]; let i = Math.round((srcStart + Math.max(0, lt - segStart) * rate) * 30) + 1
+  i = Math.min(n, Math.max(1, i)); const src = `clips/${name}/${String(i).padStart(4, '0')}.jpg`
+  if (img.getAttribute('src') !== src) img.setAttribute('src', src)
+}
+function playlist(img, lt, list) { // [{at, name, from, rate}]
+  let cur = list[0]; for (const c of list) if (lt >= c.at) cur = c
+  clip(img, cur.name, cur.from, cur.rate, lt, cur.at); return cur
+}
+function scene(id, t) { const s = TL[id]; return t - s.start }
+function wipe(el, lt, dur = 0.55) { // entrada: barrido diagonal
+  const k = eio(p(lt, 0, dur)); el.style.clipPath = k >= 1 ? 'none' : `polygon(0 0, ${k * 140}% 0, ${k * 140 - 40}% 100%, 0 100%)`
+}
+function glowAt(el, x, y) { el.style.left = x + 'px'; el.style.top = y + 'px' }
+function tiltBrowser(el, lt, from, to, y0 = 60) {
+  const k = eo(p(lt, 0.1, 1.1)); el.style.opacity = clamp(k * 2)
+  el.style.transform = `perspective(2200px) rotateY(${lerp(from, to, k)}deg) translateY(${(1 - k) * y0}px) scale(${lerp(0.94, 1, k)})`
+}
+
+window.setup = (tl, frames) => { TL = tl; FRAMES = frames }
+window.render = (t) => {
+  for (const id of Object.keys(TL)) { const s = TL[id]; $(id).style.display = (t >= s.start && t < s.start + s.dur + (s.tail || 0)) ? 'block' : 'none' }
+  const order = Object.keys(TL); order.forEach((id, i) => { $(id).style.zIndex = i + 1 })
+
+  // ---------- S1
+  { const lt = scene('s1', t)
+    ;[['s1p1', 0], ['s1p2', 0.15], ['s1p3', 0.3]].forEach(([id, d]) => { const k = p(lt, d, d + 0.9); $(id).style.opacity = eo(k); $(id).style.transform = `scale(${1.25 - 0.13 * eo(p(lt, 0, 6))}) translateY(${(1 - eo(k)) * 60}px)` })
+    rise($('s1pill'), lt, 0.2, 30)
+    const box = $('s1t'); if (!box.dataset.ready) {
+      const lines = [['¿Y', 'si', 'planificar', 'tu', 'próxima', 'escapada'], ['al', 'Maule', 'tomara', 'solo'], ['un', 'par', 'de', 'minutos?']]
+      box.innerHTML = lines.map((l, li) => `<div style="${li === 2 ? 'font-size:140px;margin-top:10px' : ''}">` + l.map((w) => `<span class="word ${li === 2 ? 'grad' : ''}">${w}</span>`).join(' ') + '</div>').join('')
+      box.dataset.ready = 1 }
+    const words = box.querySelectorAll('.word'); words.forEach((w, i) => { const at = i < 10 ? 0.35 + i * 0.12 : 2.0 + (i - 10) * 0.1; const k = eo(p(lt, at, at + 0.45)); w.style.opacity = k; w.style.transform = `translateY(${(1 - k) * 50}px) scale(${i >= 10 ? lerp(0.7, 1, back(p(lt, at, at + 0.55))) : 1})` })
+  }
+  // ---------- S2
+  { const lt = scene('s2', t); wipe($('s2'), lt)
+    glowAt($('s2g1'), 1250 + Math.sin(lt * 0.6) * 80, -350 + Math.cos(lt * 0.5) * 60); glowAt($('s2g2'), -300 + Math.cos(lt * 0.4) * 80, 500)
+    const up = eo(p(lt, 2.4, 3.1)) * 70
+    pop($('s2logo'), lt, 0.3, 0.7, `translateY(${-up}px)`)
+    const k = eo(p(lt, 0.7, 1.4)); $('s2title').style.opacity = k; $('s2title').style.transform = `translateY(${(1 - k) * 60 - up}px)`; $('s2title').style.letterSpacing = `${lerp(8, -2.5, k)}px`
+    const k2 = eo(p(lt, 1.2, 1.8)); $('s2tag').style.opacity = k2; $('s2tag').style.transform = `translateY(${(1 - k2) * 30 - up}px)`
+    for (let i = 0; i < 4; i++) { const c = $('cat' + i); const kk = p(lt, 2.6 + i * 0.22, 3.3 + i * 0.22); c.style.opacity = clamp(kk * 2.5); c.style.transform = `translateY(${(1 - back(kk)) * 140 - 20}px) rotate(${(1 - eo(kk)) * (i % 2 ? 6 : -6)}deg)` }
+  }
+  // ---------- S3
+  { const lt = scene('s3', t); wipe($('s3'), lt)
+    rise($('s3txt'), lt, 0.3, 50, 0.8)
+    $('s3chips').querySelectorAll('.chip').forEach((c, i) => pop(c, lt, 1.1 + i * 0.25, 0.5))
+    tiltBrowser($('b3'), lt, -18, -6)
+    const cur = playlist($('b3img'), lt, [{ at: 0, name: 'search', from: 0.2, rate: 2.0 }, { at: 3.4, name: 'map', from: 4.6, rate: 1.7 }])
+    // acercamiento al mapa
+    const z = eio(p(lt, 4.4, 5.6)) * (1 - eio(p(lt, 6.9, 7.6))); const img = $('b3img')
+    img.style.transform = `translate(${-z * 0.42 * 1120}px, ${-z * 0.18 * 525}px) scale(${1 + z * 0.65})`
+  }
+  // ---------- S4
+  { const lt = scene('s4', t); wipe($('s4'), lt)
+    tiltBrowser($('b4'), lt, 16, 5)
+    rise($('s4txt'), lt, 0.35, 50, 0.8)
+    ;['s4b1', 's4b2', 's4b3'].forEach((id, i) => { const k = p(lt, 1.0 + i * 0.8, 1.6 + i * 0.8); $(id).style.opacity = clamp(k * 2); $(id).style.transform = `translateX(${(1 - back(k)) * 120}px)` })
+    playlist($('b4img'), lt, [{ at: 0, name: 'detail', from: 0.3, rate: 1.5 }, { at: 3.3, name: 'book', from: 1.0, rate: 1.6 }])
+  }
+  // ---------- S5
+  { const lt = scene('s5', t); wipe($('s5'), lt)
+    rise($('s5txt'), lt, 0.3, 40, 0.7)
+    tiltBrowser($('b5'), lt, -12, -4)
+    const cur = playlist($('b5img'), lt, [{ at: 0, name: 'paydlg', from: 0.2, rate: 1.6 }, { at: 1.8, name: 'gateway', from: 0.6, rate: 2.6 }, { at: 4.6, name: 'receipt', from: 0.6, rate: 0.9 }])
+    $('b5url').textContent = cur.name === 'gateway' ? '🔒 Pago con tarjeta · ambiente de pruebas' : cur.name === 'receipt' ? '🔒 proyecto-de-titulo-p8gc.vercel.app/payments/result' : '🔒 proyecto-de-titulo-p8gc.vercel.app/bookings'
+    ;['s5b1', 's5b2'].forEach((id, i) => { const k = p(lt, 1.2 + i * 0.6, 1.8 + i * 0.6); $(id).style.opacity = clamp(k * 2); $(id).style.transform = `translateX(${(1 - back(k)) * 120}px)` })
+    pop($('s5ok'), lt, 5.0, 0.7)
+  }
+  // ---------- S6
+  { const lt = scene('s6', t); wipe($('s6'), lt)
+    rise($('s6txt'), lt, 0.3, 50, 0.8)
+    for (let i = 0; i < 3; i++) { const k = p(lt, 1.2 + i * 0.5, 1.8 + i * 0.5); const c = $('s6c' + i); c.style.opacity = clamp(k * 2); c.style.transform = `translateX(${(1 - back(k)) * -80}px)` }
+    tiltBrowser($('b6'), lt, -16, -5)
+    playlist($('b6img'), lt, [{ at: 0, name: 'hostres', from: 0.3, rate: 1.6 }, { at: 2.6, name: 'hostofe', from: 0.4, rate: 1.4 }, { at: 5.0, name: 'reports', from: 0.6, rate: 1.3 }])
+  }
+  // ---------- S7
+  { const lt = scene('s7', t); wipe($('s7'), lt)
+    glowAt($('s7g1'), 1150 + Math.sin(lt * 0.7) * 90, -380); glowAt($('s7g2'), -250, 450 + Math.cos(lt * 0.6) * 70)
+    pop($('s7logo'), lt, 0.3, 0.7)
+    const k = eo(p(lt, 0.7, 1.4)); $('s7title').style.opacity = k; $('s7title').style.transform = `translateY(${(1 - k) * 60}px)`; $('s7title').style.letterSpacing = `${lerp(10, -3, k)}px`
+    rise($('s7tag'), lt, 1.3, 30); rise($('s7url'), lt, 2.0, 30); rise($('s7foot'), lt, 2.4, 20)
+    const total = TL.s7.start + TL.s7.dur; $('black').style.opacity = eio(p(t, total - 0.7, total))
+  }
+}
+</script></body></html>
