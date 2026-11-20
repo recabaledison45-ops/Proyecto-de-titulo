@@ -19,6 +19,22 @@ function Field({ id, label, icon: Icon, children, className }) {
 
 const inputClass = 'w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground'
 
+// En teléfonos (Android/iOS) un campo de fecha vacío se ve en blanco: mostramos
+// "Agregar fecha" encima hasta que se elija una o se toque el campo.
+function DateInput({ id, value, onChange, min }) {
+  return (
+    <span className="relative grid">
+      <input id={id} type="date" min={min} value={value} onChange={onChange}
+        className={cn(inputClass, 'peer min-h-6', !value && 'text-transparent focus:text-foreground')} />
+      {!value && (
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 flex items-center text-sm text-muted-foreground peer-focus:hidden">
+          Agregar fecha
+        </span>
+      )}
+    </span>
+  )
+}
+
 // Buscador de la portada: lleva al explorador con los filtros en la URL.
 export default function SearchBar({ className }) {
   const navigate = useNavigate()
@@ -45,7 +61,7 @@ export default function SearchBar({ className }) {
 
   return (
     <form onSubmit={submit} role="search" aria-label="Buscar experiencias" className={cn('w-full', className)} noValidate>
-      <div className="flex flex-col gap-1 rounded-3xl border bg-white p-2 shadow-2xl md:flex-row md:items-center md:gap-0 md:rounded-full md:p-2">
+      <div className="flex flex-col gap-1 rounded-3xl border bg-white p-2 text-left text-foreground shadow-2xl md:flex-row md:items-center md:gap-0 md:rounded-full md:p-2">
         <Field id="s-where" label="¿Dónde?" icon={MapPin} className="md:flex-[1.4]">
           <input id="s-where" list="destinos" className={inputClass} placeholder="Constitución, Talca, kayak…" value={where}
             onChange={(e) => setWhere(e.target.value)} autoComplete="off" maxLength={100} />
@@ -53,11 +69,11 @@ export default function SearchBar({ className }) {
         </Field>
         <span className="hidden h-8 w-px bg-border md:block" aria-hidden="true" />
         <Field id="s-in" label="Llegada" icon={CalendarDays}>
-          <input id="s-in" type="date" className={inputClass} min={todayISO()} value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
+          <DateInput id="s-in" min={todayISO()} value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
         </Field>
         <span className="hidden h-8 w-px bg-border md:block" aria-hidden="true" />
         <Field id="s-out" label="Salida" icon={CalendarDays}>
-          <input id="s-out" type="date" className={inputClass} min={checkIn || todayISO()} value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+          <DateInput id="s-out" min={checkIn || todayISO()} value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
         </Field>
         <span className="hidden h-8 w-px bg-border md:block" aria-hidden="true" />
         <Field id="s-guests" label="Personas" icon={Users} className="md:max-w-44">
